@@ -84,3 +84,6 @@ Sinta-se à vontade para contribuir com o projeto. Por favor, siga as diretrizes
 ## Suporte
 
 Para dúvidas ou problemas, entre em contato com a equipe de desenvolvimento.
+
+---
+**Desenvolvido por:** João Vitor Duarte Antunes
