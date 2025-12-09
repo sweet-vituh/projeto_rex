@@ -72,8 +72,8 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Convert username to email format
-      const email = `${username.toLowerCase().trim()}@company.local`;
+      // Convert username to email format using a valid dummy domain
+      const email = `${username.toLowerCase().trim()}@rexapp.com`; // Alterado para um domínio válido
 
       if (isSignUp) {
         // Create account - ALWAYS as mechanic (security fix)
