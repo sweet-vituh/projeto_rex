@@ -81,7 +81,7 @@ const Login = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/home`
+            // emailRedirectTo: `${window.location.origin}/home` // Removido, pois domínios .local não são válidos para confirmação de e-mail
           }
         });
 
