@@ -1,0 +1,61 @@
+# AI Rules for Rex Application Development
+
+This document outlines the core technologies and specific library usage guidelines for developing the Rex application. Adhering to these rules ensures consistency, maintainability, and leverages the strengths of our chosen tech stack.
+
+## Tech Stack Overview
+
+*   **Frontend Framework**: React with TypeScript
+*   **Build Tool**: Vite
+*   **Styling**: Tailwind CSS for utility-first styling
+*   **UI Component Library**: shadcn/ui (built on Radix UI and Tailwind CSS)
+*   **Routing**: React Router DOM for client-side navigation
+*   **Backend & Authentication**: Supabase for database, authentication, and real-time features
+*   **Data Fetching & Caching**: Tanstack Query for managing server state
+*   **Form Management**: React Hook Form for robust form handling
+*   **Schema Validation**: Zod for defining and validating data schemas
+*   **Icons**: Lucide React for scalable vector icons
+*   **Theming**: Next Themes for dark/light mode functionality
+*   **Notifications**: Sonner for elegant toast notifications
+*   **Date Utilities**: Date-fns for date manipulation and formatting
+
+## Library Usage Rules
+
+To maintain a consistent and efficient codebase, please follow these guidelines when implementing features:
+
+*   **UI Components**:
+    *   **Always** prioritize `shadcn/ui` components for all UI elements.
+    *   If a specific `shadcn/ui` component is not available or requires significant deviation from its intended design, create a new, small, and focused component in `src/components/` using Tailwind CSS directly. **Do not modify `shadcn/ui` component files.**
+*   **Styling**:
+    *   **Exclusively** use Tailwind CSS classes for all styling. Avoid inline styles or custom CSS files unless absolutely necessary for global styles (e.g., `src/index.css`).
+    *   Ensure designs are responsive by utilizing Tailwind's responsive utility classes.
+*   **Routing**:
+    *   Use `react-router-dom` for all application routing.
+    *   All primary routes should be defined and managed within `src/App.tsx`.
+    *   New pages should be placed in `src/pages/`.
+*   **Backend & Authentication**:
+    *   All interactions with the database, authentication, and real-time subscriptions must use the `supabase` client from `src/integrations/supabase/client.ts`.
+    *   Sensitive operations (e.g., user role creation) should leverage Supabase RPC functions for security.
+*   **Data Fetching**:
+    *   For fetching, caching, and synchronizing server state, use `Tanstack Query`.
+*   **Forms**:
+    *   Implement forms using `react-hook-form` for controlled inputs and validation.
+    *   Pair `react-hook-form` with `zod` for defining form schemas and performing validation.
+*   **Icons**:
+    *   Use icons from the `lucide-react` library.
+*   **Theming**:
+    *   Manage dark and light themes using `next-themes`. The `ThemeProvider` is already set up in `src/App.tsx`.
+*   **Notifications**:
+    *   For user feedback and notifications, use the `sonner` toast library. The `Sonner` component is already integrated into `src/App.tsx`.
+*   **Date Handling**:
+    *   For any date formatting, parsing, or manipulation, use `date-fns`.
+*   **File Structure**:
+    *   New components should be created in `src/components/`.
+    *   New pages should be created in `src/pages/`.
+    *   Utility functions should be placed in `src/lib/` or a more specific `src/utils/` folder if applicable.
+    *   Custom hooks should be placed in `src/hooks/`.
+    *   Directory names must be all lower-case. File names may use mixed-case.
+*   **Code Quality**:
+    *   Write clean, readable, and maintainable TypeScript code.
+    *   Prioritize creating small, focused files and components (ideally under 100 lines of code for components).
+    *   Avoid over-engineering; implement the minimum necessary to fulfill the request.
+    *   Do not use `try/catch` for API calls unless specifically requested, allowing errors to bubble up for centralized handling.
