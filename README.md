@@ -1,73 +1,86 @@
-# Welcome to your Lovable project
+# Rex - Sistema de Requisição de Materiais para Manutenção
 
-## Project info
+Bem-vindo ao Rex, um sistema interno de requisição de materiais projetado para otimizar o processo de manutenção. Este aplicativo permite que mecânicos criem requisições de forma eficiente, enquanto os PCMs (Planejamento e Controle de Manutenção) podem gerenciar, aprovar e acompanhar o status dessas requisições.
 
-**URL**: https://lovable.dev/projects/93c24b47-bdae-41ae-9773-0b278bdfb7db
+## Sobre o Projeto
 
-## How can I edit this code?
+O Rex foi desenvolvido para simplificar a comunicação e o fluxo de trabalho entre as equipes de manutenção e almoxarifado, garantindo que os materiais certos estejam disponíveis no momento certo.
 
-There are several ways of editing your application.
+## Funcionalidades Principais
 
-**Use Lovable**
+*   **Criação de Requisições**: Mecânicos podem criar novas requisições de materiais, especificando área, equipamento, item, quantidade, prioridade e descrição do problema, com a opção de anexar fotos.
+*   **Catálogo de Itens**: Um catálogo centralizado de itens permite a seleção rápida e padronizada de materiais.
+*   **Gestão de Requisições (PCM)**: PCMs têm uma caixa de entrada para visualizar e gerenciar todas as requisições, podendo assumir, atualizar o status (em andamento, pré-liberação, coleta emitida, material disponível, encerrada sem liberação), rejeitar ou transferir requisições.
+*   **Histórico de Requisições**: Usuários podem visualizar o histórico completo de suas requisições, com filtros por status.
+*   **Gerenciamento de Usuários e Catálogo (Admin)**: Administradores podem gerenciar usuários (promover/rebaixar funções) e manter o catálogo de itens e categorias, incluindo importação via CSV.
+*   **Autenticação e Autorização**: Sistema de login seguro com controle de acesso baseado em funções (Mecânico, PCM, Admin).
+*   **Notificações em Tempo Real**: Atualizações de status de requisições são refletidas em tempo real.
+*   **Design Responsivo**: Interface adaptável para diferentes tamanhos de tela.
+*   **Modo Claro/Escuro**: Opção de alternar entre temas claro e escuro.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/93c24b47-bdae-41ae-9773-0b278bdfb7db) and start prompting.
+## Tecnologias Utilizadas
 
-Changes made via Lovable will be committed automatically to this repo.
+*   **Frontend**: React com TypeScript
+*   **Estilização**: Tailwind CSS e shadcn/ui
+*   **Roteamento**: React Router DOM
+*   **Backend & Banco de Dados**: Supabase (Autenticação, PostgreSQL, Realtime)
+*   **Gerenciamento de Estado do Servidor**: Tanstack Query
+*   **Validação de Formulários**: React Hook Form e Zod
+*   **Ícones**: Lucide React
+*   **Notificações**: Sonner
+*   **Utilitários de Data**: Date-fns
 
-**Use your preferred IDE**
+## Configuração e Instalação Local
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Para rodar o projeto Rex em sua máquina local, siga os passos abaixo:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Pré-requisitos
 
-Follow these steps:
+*   Node.js (versão 18 ou superior) e npm (gerenciador de pacotes)
+*   Uma conta Supabase com o projeto configurado (o esquema do banco de dados já está fornecido nas migrações).
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Passos para Instalação
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1.  **Clone o repositório:**
+    ```sh
+    git clone <YOUR_GIT_URL>
+    cd <YOUR_PROJECT_NAME>
+    ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2.  **Instale as dependências:**
+    ```sh
+    npm install
+    ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+3.  **Configure as variáveis de ambiente:**
+    Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis do seu projeto Supabase:
+    ```
+    VITE_SUPABASE_URL="https://yhowuqvhltqdcsmvppwt.supabase.co"
+    VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlob3d1cXZobHRxZGNzbXZwcHd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUzMDUzMDAsImV4cCI6MjA4MDg4MTMwMH0.O_R6b9UgTNjFt_BlB83wHBUw2XPsrGSlxxLY9spHh_k"
+    ```
+    *Substitua os valores pelos do seu projeto Supabase, se necessário. Os valores acima são os padrões do projeto.*
 
-**Edit a file directly in GitHub**
+4.  **Inicie o servidor de desenvolvimento:**
+    ```sh
+    npm run dev
+    ```
+    O aplicativo estará disponível em `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Como Usar
 
-**Use GitHub Codespaces**
+*   **Login**: Acesse a página inicial e faça login com um usuário existente ou crie uma nova conta.
+*   **Mecânico**: Após o login, será redirecionado para a página inicial onde pode criar novas requisições e ver o histórico.
+*   **PCM**: Após o login, será redirecionado para a caixa de entrada para gerenciar requisições.
+*   **Admin**: Após o login, será redirecionado para o painel de administração para gerenciar usuários e o catálogo.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Implantação
 
-## What technologies are used for this project?
+Este projeto é gerenciado pela plataforma Lovable. Para implantar, basta acessar o projeto no Lovable e utilizar as opções de publicação.
 
-This project is built with:
+## Contribuição
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Sinta-se à vontade para contribuir com o projeto. Por favor, siga as diretrizes de código e abra pull requests para novas funcionalidades ou correções.
 
-## How can I deploy this project?
+## Suporte
 
-Simply open [Lovable](https://lovable.dev/projects/93c24b47-bdae-41ae-9773-0b278bdfb7db) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Para dúvidas ou problemas, entre em contato com a equipe de desenvolvimento.
