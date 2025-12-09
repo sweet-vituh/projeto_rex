@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Rex Design System - Red & Gray Theme */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 18%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 18%;
+
+    /* Primary - Red */
+    --primary: 0 65% 51%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 0 74% 42%;
+
+    /* Secondary - Gray */
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 18%;
+
+    /* Muted - Gray tones */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 54%;
+
+    /* Accent - Dark gray */
+    --accent: 0 0% 18%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 65% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders */
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 65% 51%;
+
+    --radius: 0.75rem;
+
+    /* Status colors */
+    --status-low: 210 100% 50%;
+    --status-normal: 45 100% 50%;
+    --status-urgent: 0 65% 51%;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  }
+
+  .dark {
+    --background: 0 0% 18%;
+    --foreground: 0 0% 96%;
+
+    --card: 0 0% 18%;
+    --card-foreground: 0 0% 96%;
+
+    --popover: 0 0% 18%;
+    --popover-foreground: 0 0% 96%;
+
+    --primary: 0 65% 51%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 0 74% 42%;
+
+    --secondary: 0 0% 24%;
+    --secondary-foreground: 0 0% 96%;
+
+    --muted: 0 0% 24%;
+    --muted-foreground: 0 0% 54%;
+
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 18%;
+
+    --destructive: 0 65% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 24%;
+    --input: 0 0% 24%;
+    --ring: 0 65% 51%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
