@@ -250,7 +250,7 @@ const NewRequisition = () => {
     "1619 - Expedição",
     "1660 - Manutenção Mecânica",
     "1678 - Manutenção Elétrica",
-    "2330 - Parque Fabri"
+    "2330 - Parque Fabril"
   ];
 
   return (
