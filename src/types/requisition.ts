@@ -15,15 +15,18 @@ export interface Requisition {
   area: string;
   equipment: string;
   item_description: string;
-  code?: string;
+  item_code?: string | null; // Changed to allow null
   quantity: number;
   priority: Priority;
   problem_description: string;
+  justification?: string | null; // Added justification
+  cost_center?: string | null; // Added cost_center
   photos: string[];
   status: Status;
   created_by: string;
   created_at: string;
   updated_at: string;
-  assigned_to?: string;
-  rejection_reason?: string;
+  assigned_to?: string | null; // Changed to allow null
+  rejection_reason?: string | null; // Changed to allow null
+  transferred_from?: string | null; // Added transferred_from
 }

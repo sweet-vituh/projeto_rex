@@ -43,12 +43,10 @@ const RequisitionDetail = () => {
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [caducouReason, setCaducouReason] = useState("");
-  const [selectedNewStatus, setSelectedNewStatus] = useState<string>("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [transferredFromName, setTransferredFromName] = useState<string | null>(null);
 
   useEffect(() => {
-
     const fetchData = async () => {
       if (!user) return;
 
@@ -128,28 +126,6 @@ const RequisitionDetail = () => {
     navigate("/minhas-requisicoes");
   };
 
-  const handleComplete = async () => {
-    const { error } = await supabase
-      .from('requisitions')
-      .update({ status: 'concluido' })
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        title: "Erro ao concluir requisição",
-        description: "Tente novamente",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "Requisição concluída",
-      description: "O solicitante foi notificado",
-    });
-    navigate("/minhas-requisicoes");
-  };
-
   const handleReject = async () => {
     if (!rejectionReason.trim()) {
       toast({
@@ -164,7 +140,8 @@ const RequisitionDetail = () => {
       .from('requisitions')
       .update({ 
         status: 'rejeitado',
-        rejection_reason: rejectionReason 
+        rejection_reason: rejectionReason,
+        assigned_to: null // Liberar requisição ao rejeitar
       })
       .eq('id', id);
 
@@ -199,15 +176,15 @@ const RequisitionDetail = () => {
       .from('requisitions')
       .update({ 
         status: 'caducou',
-        rejection_reason: caducouReason 
+        rejection_reason: caducouReason,
+        assigned_to: null // Liberar requisição ao marcar como caducou
       })
       .eq('id', id);
 
     if (error) {
       toast({
-        title: "Erro ao marcar como caducou",
-        description: "Tente novamente",
-        variant: "destructive",
+        title: "Requisição marcada como caducou",
+        description: "O solicitante foi notificado",
       });
       return;
     }
@@ -221,15 +198,16 @@ const RequisitionDetail = () => {
   };
 
   const handleStatusChange = async (newStatus: string) => {
-    // Se mudar para caducou, abrir diálogo para motivo
-    if (newStatus === "caducou") {
-      setShowCaducouDialog(true);
-      return;
+    let updateData: Partial<Requisition> = { status: newStatus as any };
+
+    // Se mudar para 'material_disponivel' ou 'encerrada_sem_liberacao', liberar a requisição
+    if (newStatus === "material_disponivel" || newStatus === "encerrada_sem_liberacao") {
+      updateData.assigned_to = null;
     }
 
     const { error } = await supabase
       .from('requisitions')
-      .update({ status: newStatus })
+      .update(updateData)
       .eq('id', id);
 
     if (error) {
@@ -256,7 +234,7 @@ const RequisitionDetail = () => {
 
     // Atualizar requisição local
     if (requisition) {
-      setRequisition({ ...requisition, status: newStatus as any });
+      setRequisition({ ...requisition, ...updateData });
     }
   };
 
@@ -276,7 +254,7 @@ const RequisitionDetail = () => {
       .from('requisitions')
       .update({ 
         assigned_to: newPcmId,
-        status: 'em_andamento',
+        status: 'em_andamento', // Volta para em_andamento ao transferir
         transferred_from: user.id
       })
       .eq('id', id);
@@ -364,8 +342,8 @@ const RequisitionDetail = () => {
             <div className="pt-4 border-t">
               <Label className="text-muted-foreground">Item Solicitado</Label>
               <p className="font-medium mt-1">{requisition.item_description}</p>
-              {requisition.code && (
-                <p className="text-sm text-muted-foreground mt-1">Código: {requisition.code}</p>
+              {requisition.item_code && ( // Display item code if available
+                <p className="text-sm text-muted-foreground mt-1">Código: {requisition.item_code}</p>
               )}
               <p className="text-sm text-muted-foreground mt-1">Quantidade: {requisition.quantity}</p>
             </div>
@@ -381,6 +359,30 @@ const RequisitionDetail = () => {
             <p className="text-foreground leading-relaxed">{requisition.problem_description}</p>
           </CardContent>
         </Card>
+
+        {/* Justification */}
+        {requisition.justification && (
+          <Card className="animate-fade-in hover:shadow-md transition-shadow duration-200">
+            <CardHeader>
+              <CardTitle>Justificativa</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-foreground leading-relaxed">{requisition.justification}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Cost Center */}
+        {requisition.cost_center && (
+          <Card className="animate-fade-in hover:shadow-md transition-shadow duration-200">
+            <CardHeader>
+              <CardTitle>Centro de Custo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-foreground leading-relaxed">{requisition.cost_center}</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Photos */}
         {requisition.photos && requisition.photos.length > 0 && (

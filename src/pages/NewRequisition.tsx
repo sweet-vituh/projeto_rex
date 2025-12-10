@@ -24,7 +24,7 @@ const COST_CENTERS = [
   "2577 - E.T.E",
 ];
 
-interface RequisitionItem {
+interface RequisitionItemFormState {
   id: string;
   area: string;
   equipment: string;
@@ -33,7 +33,7 @@ interface RequisitionItem {
   quantity: string;
 }
 
-const createEmptyItem = (): RequisitionItem => ({
+const createEmptyItem = (): RequisitionItemFormState => ({
   id: crypto.randomUUID(),
   area: "",
   equipment: "",
@@ -46,7 +46,7 @@ const NewRequisition = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { 
-    items, 
+    items: catalogItems, // Renamed to avoid conflict with requisitionItems
     isLoading: isLoadingCatalog, 
     areas, 
     getEquipmentsByArea, 
@@ -63,9 +63,9 @@ const NewRequisition = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Multiple items
-  const [requisitionItems, setRequisitionItems] = useState<RequisitionItem[]>([createEmptyItem()]);
+  const [requisitionItems, setRequisitionItems] = useState<RequisitionItemFormState[]>([createEmptyItem()]);
 
-  const updateItem = (id: string, field: keyof RequisitionItem, value: string) => {
+  const updateItem = (id: string, field: keyof RequisitionItemFormState, value: string) => {
     setRequisitionItems(prev => prev.map(item => {
       if (item.id !== id) return item;
       
@@ -97,7 +97,7 @@ const NewRequisition = () => {
   };
 
   const getSelectedCatalogItem = (selectedItemId: string): CatalogItem | undefined => {
-    return items.find(item => item.id === selectedItemId);
+    return catalogItems.find(item => item.id === selectedItemId);
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,13 +143,13 @@ const NewRequisition = () => {
 
     // Validate items
     const invalidItems = requisitionItems.filter(item => 
-      !item.area || !item.equipment || !item.category || !item.selectedItemId
+      !item.area || !item.equipment || !item.category || !item.selectedItemId || parseInt(item.quantity) <= 0
     );
     
     if (invalidItems.length > 0) {
       toast({
-        title: "Itens incompletos",
-        description: "Preencha todos os campos de todos os itens",
+        title: "Itens incompletos ou inválidos",
+        description: "Preencha todos os campos de todos os itens e verifique as quantidades",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -171,7 +171,7 @@ const NewRequisition = () => {
           area: reqItem.area,
           equipment: reqItem.equipment,
           item_description: catalogItem?.system_description || catalogItem?.item_description || "",
-          item_code: catalogItem?.item_code || "",
+          item_code: catalogItem?.item_code || null, // Ensure item_code is null if not found
           quantity: parseInt(reqItem.quantity),
           priority,
           problem_description: problemDescription,
@@ -239,7 +239,7 @@ const NewRequisition = () => {
     );
   }
 
-  const hasCatalogItems = items.length > 0;
+  const hasCatalogItems = catalogItems.length > 0;
 
   return (
     <div className="min-h-screen bg-background animate-fade-in">

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +23,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Requisition, Status } from "@/types/requisition";
+import { toast as sonnerToast } from "sonner";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -36,6 +38,66 @@ const Home = () => {
     userId: user?.id,
     filterByCreator: true,
   });
+
+  const previousRequisitionsRef = useRef<Requisition[]>([]);
+
+  useEffect(() => {
+    if (isLoading || !user) return;
+
+    // Compare current requisitions with previous ones to detect status changes
+    const previousRequisitions = previousRequisitionsRef.current;
+
+    requisitions.forEach(currentReq => {
+      const previousReq = previousRequisitions.find(pReq => pReq.id === currentReq.id);
+
+      if (previousReq && previousReq.status !== currentReq.status) {
+        // Status changed for a requisition created by the current user
+        if (currentReq.created_by === user.id) {
+          if (currentReq.status === "material_disponivel") {
+            sonnerToast.success(`Material Disponível!`, {
+              description: `A requisição para "${currentReq.item_description}" está pronta para coleta.`,
+              duration: 8000,
+              action: {
+                label: "Ver",
+                onClick: () => navigate(`/requisicao/${currentReq.id}`),
+              },
+            });
+          } else if (currentReq.status === "encerrada_sem_liberacao") {
+            sonnerToast.info(`Requisição Encerrada`, {
+              description: `A requisição para "${currentReq.item_description}" foi encerrada sem liberação.`,
+              duration: 8000,
+              action: {
+                label: "Ver",
+                onClick: () => navigate(`/requisicao/${currentReq.id}`),
+              },
+            });
+          } else if (currentReq.status === "rejeitado") {
+            sonnerToast.error(`Requisição Rejeitada`, {
+              description: `A requisição para "${currentReq.item_description}" foi rejeitada.`,
+              duration: 8000,
+              action: {
+                label: "Ver",
+                onClick: () => navigate(`/requisicao/${currentReq.id}`),
+              },
+            });
+          } else if (currentReq.status === "caducou") {
+            sonnerToast.warning(`Requisição Caducou`, {
+              description: `A requisição para "${currentReq.item_description}" caducou.`,
+              duration: 8000,
+              action: {
+                label: "Ver",
+                onClick: () => navigate(`/requisicao/${currentReq.id}`),
+              },
+            });
+          }
+        }
+      }
+    });
+
+    // Update the ref with the current requisitions for the next comparison
+    previousRequisitionsRef.current = requisitions;
+  }, [requisitions, isLoading, user, navigate]);
+
 
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
