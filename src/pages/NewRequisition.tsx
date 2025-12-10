@@ -14,16 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCatalogItems, CatalogItem } from "@/hooks/use-catalog-items";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const COST_CENTERS = [
-  "1147 - Forno de Vidro",
-  "6700 - Corte/Esquadramento",
-  "1066 - Preparação da Massa",
-  "1082 - Prensagem",
-  "1074 - Atomização",
-  "1104 - Esmaltação/Decor",
-  "2577 - E.T.E",
-];
-
 interface RequisitionItemFormState {
   id: string;
   area: string;
@@ -45,13 +35,12 @@ const createEmptyItem = (): RequisitionItemFormState => ({
 const NewRequisition = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { 
-    items: catalogItems, // Renamed to avoid conflict with requisitionItems
-    isLoading: isLoadingCatalog, 
-    areas, 
-    getEquipmentsByArea, 
-    getCategoriesByAreaAndEquipment, 
-    getFilteredItems 
+  const { items: catalogItems, // Renamed to avoid conflict with requisitionItems
+    isLoading: isLoadingCatalog,
+    areas,
+    getEquipmentsByArea,
+    getCategoriesByAreaAndEquipment,
+    getFilteredItems
   } = useCatalogItems();
 
   // Root fields
@@ -103,7 +92,7 @@ const NewRequisition = () => {
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-
+    
     if (photos.length + files.length > 5) {
       toast({
         title: "Limite de fotos",
@@ -112,7 +101,7 @@ const NewRequisition = () => {
       });
       return;
     }
-
+    
     Array.from(files).forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -129,7 +118,7 @@ const NewRequisition = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
+    
     // Validation
     if (!costCenter || !problemDescription || !justification) {
       toast({
@@ -140,10 +129,14 @@ const NewRequisition = () => {
       setIsLoading(false);
       return;
     }
-
+    
     // Validate items
     const invalidItems = requisitionItems.filter(item => 
-      !item.area || !item.equipment || !item.category || !item.selectedItemId || parseInt(item.quantity) <= 0
+      !item.area || 
+      !item.equipment || 
+      !item.category || 
+      !item.selectedItemId || 
+      parseInt(item.quantity) <= 0
     );
     
     if (invalidItems.length > 0) {
@@ -155,14 +148,13 @@ const NewRequisition = () => {
       setIsLoading(false);
       return;
     }
-
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) {
         throw new Error("Usuário não autenticado");
       }
-
+      
       // Create one requisition per item
       const requisitionsToInsert = requisitionItems.map(reqItem => {
         const catalogItem = getSelectedCatalogItem(reqItem.selectedItemId);
@@ -180,17 +172,18 @@ const NewRequisition = () => {
           photos,
         };
       });
-
+      
       const { error } = await supabase
         .from('requisitions')
         .insert(requisitionsToInsert);
-
+        
       if (error) throw error;
-
+      
       toast({
         title: "Requisição enviada!",
         description: `${requisitionItems.length} item(s) requisitado(s) com sucesso`,
       });
+      
       navigate("/home");
     } catch (error: any) {
       toast({
@@ -240,6 +233,25 @@ const NewRequisition = () => {
   }
 
   const hasCatalogItems = catalogItems.length > 0;
+  
+  const COST_CENTERS = [
+    "1147 - Forno de Vidro",
+    "6700 - Corte/Esquadramento",
+    "1066 - Preparação da Massa",
+    "1082 - Prensagem",
+    "1074 - Atomização",
+    "1104 - Esmaltação/Decor",
+    "2577 - E.T.E",
+    "2291 - Edificio industrial",
+    "2232 - ADM Industrial",
+    "1163 - Classificação",
+    "2348 - Compressores",
+    "2240 - Depto Tecnico",
+    "1619 - Expedição",
+    "1660 - Manutenção Mecânica",
+    "1678 - Manutenção Elétrica",
+    "2330 - Parque Fabri"
+  ];
 
   return (
     <div className="min-h-screen bg-background animate-fade-in">
@@ -255,7 +267,7 @@ const NewRequisition = () => {
           <ThemeToggle />
         </div>
       </header>
-
+      
       <main className="container mx-auto px-4 py-6 max-w-2xl">
         {!hasCatalogItems ? (
           <Card>
@@ -288,7 +300,7 @@ const NewRequisition = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="priority">Prioridade *</Label>
                   <Select value={priority} onValueChange={(value) => setPriority(value as Priority)}>
@@ -302,33 +314,33 @@ const NewRequisition = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="problem">Descrição do Problema *</Label>
-                  <Textarea
-                    id="problem"
-                    placeholder="Descreva o problema encontrado..."
-                    value={problemDescription}
-                    onChange={(e) => setProblemDescription(e.target.value)}
-                    rows={4}
-                    required
+                  <Textarea 
+                    id="problem" 
+                    placeholder="Descreva o problema encontrado..." 
+                    value={problemDescription} 
+                    onChange={(e) => setProblemDescription(e.target.value)} 
+                    rows={4} 
+                    required 
                   />
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="justification">Justificativa *</Label>
-                  <Textarea
-                    id="justification"
-                    placeholder="Justifique a necessidade deste material..."
-                    value={justification}
-                    onChange={(e) => setJustification(e.target.value)}
-                    rows={3}
-                    required
+                  <Textarea 
+                    id="justification" 
+                    placeholder="Justifique a necessidade deste material..." 
+                    value={justification} 
+                    onChange={(e) => setJustification(e.target.value)} 
+                    rows={3} 
+                    required 
                   />
                 </div>
               </CardContent>
             </Card>
-
+            
             {/* Items */}
             <Card className="animate-fade-in hover:shadow-md transition-shadow duration-200">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -341,21 +353,19 @@ const NewRequisition = () => {
               <CardContent className="space-y-6">
                 {requisitionItems.map((reqItem, index) => {
                   const availableEquipments = reqItem.area ? getEquipmentsByArea(reqItem.area) : [];
-                  const availableCategories = reqItem.area && reqItem.equipment 
-                    ? getCategoriesByAreaAndEquipment(reqItem.area, reqItem.equipment) : [];
-                  const availableItems = reqItem.area && reqItem.equipment && reqItem.category 
-                    ? getFilteredItems(reqItem.area, reqItem.equipment, reqItem.category) : [];
+                  const availableCategories = reqItem.area && reqItem.equipment ? getCategoriesByAreaAndEquipment(reqItem.area, reqItem.equipment) : [];
+                  const availableItems = reqItem.area && reqItem.equipment && reqItem.category ? getFilteredItems(reqItem.area, reqItem.equipment, reqItem.category) : [];
                   const selectedCatalogItem = getSelectedCatalogItem(reqItem.selectedItemId);
-
+                  
                   return (
                     <div key={reqItem.id} className="p-4 border rounded-lg space-y-4 relative">
                       {requisitionItems.length > 1 && (
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium text-muted-foreground">Item {index + 1}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon" 
                             className="h-8 w-8 text-destructive hover:text-destructive"
                             onClick={() => removeItem(reqItem.id)}
                           >
@@ -363,11 +373,14 @@ const NewRequisition = () => {
                           </Button>
                         </div>
                       )}
-
+                      
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Área / Setor *</Label>
-                          <Select value={reqItem.area} onValueChange={(v) => updateItem(reqItem.id, "area", v)}>
+                          <Select 
+                            value={reqItem.area} 
+                            onValueChange={(v) => updateItem(reqItem.id, "area", v)}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
@@ -378,7 +391,7 @@ const NewRequisition = () => {
                             </SelectContent>
                           </Select>
                         </div>
-
+                        
                         <div className="space-y-2">
                           <Label>Equipamento *</Label>
                           <Select 
@@ -397,7 +410,7 @@ const NewRequisition = () => {
                           </Select>
                         </div>
                       </div>
-
+                      
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Categoria *</Label>
@@ -416,18 +429,18 @@ const NewRequisition = () => {
                             </SelectContent>
                           </Select>
                         </div>
-
+                        
                         <div className="space-y-2">
                           <Label>Quantidade *</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={reqItem.quantity}
-                            onChange={(e) => updateItem(reqItem.id, "quantity", e.target.value)}
+                          <Input 
+                            type="number" 
+                            min="1" 
+                            value={reqItem.quantity} 
+                            onChange={(e) => updateItem(reqItem.id, "quantity", e.target.value)} 
                           />
                         </div>
                       </div>
-
+                      
                       <div className="space-y-2">
                         <Label>Item *</Label>
                         <Select 
@@ -447,7 +460,7 @@ const NewRequisition = () => {
                           </SelectContent>
                         </Select>
                       </div>
-
+                      
                       {selectedCatalogItem && (
                         <div className="p-3 bg-muted rounded-lg text-sm">
                           <p><strong>Código:</strong> {selectedCatalogItem.item_code}</p>
@@ -459,7 +472,7 @@ const NewRequisition = () => {
                 })}
               </CardContent>
             </Card>
-
+            
             {/* Photos */}
             <Card className="animate-fade-in hover:shadow-md transition-shadow duration-200">
               <CardHeader>
@@ -471,10 +484,10 @@ const NewRequisition = () => {
                     {photos.map((photo, index) => (
                       <div key={index} className="relative aspect-square rounded-lg overflow-hidden border animate-scale-in">
                         <img src={photo} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          size="icon" 
                           className="absolute top-1 right-1 h-6 w-6 transition-all duration-200 hover:scale-110"
                           onClick={() => removePhoto(index)}
                         >
@@ -484,34 +497,34 @@ const NewRequisition = () => {
                     ))}
                   </div>
                 )}
-
+                
                 {photos.length < 5 && (
-                  <Label
-                    htmlFor="photos"
+                  <Label 
+                    htmlFor="photos" 
                     className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-8 cursor-pointer hover:bg-muted/50 transition-all duration-200"
                   >
                     <Camera className="w-8 h-8 text-muted-foreground mb-2" />
                     <span className="text-sm text-muted-foreground">Adicionar foto</span>
-                    <Input
-                      id="photos"
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={handlePhotoUpload}
-                      multiple
+                    <Input 
+                      id="photos" 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment" 
+                      className="hidden" 
+                      onChange={handlePhotoUpload} 
+                      multiple 
                     />
                   </Label>
                 )}
               </CardContent>
             </Card>
-
+            
             <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 transition-all duration-200 hover:bg-accent"
-                onClick={handleSaveDraft}
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="flex-1 transition-all duration-200 hover:bg-accent" 
+                onClick={handleSaveDraft} 
                 disabled={isLoading}
               >
                 Salvar Rascunho

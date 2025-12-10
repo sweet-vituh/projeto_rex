@@ -18,16 +18,8 @@ const EditRequisition = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { items: catalogItems, isLoading: isLoadingCatalog, areas, getEquipmentsByArea, getCategoriesByAreaAndEquipment, getFilteredItems } = useCatalogItems();
   
-  const { 
-    items: catalogItems, 
-    isLoading: isLoadingCatalog, 
-    areas, 
-    getEquipmentsByArea, 
-    getCategoriesByAreaAndEquipment, 
-    getFilteredItems 
-  } = useCatalogItems();
-
   const [area, setArea] = useState("");
   const [equipment, setEquipment] = useState("");
   const [category, setCategory] = useState("");
@@ -48,18 +40,28 @@ const EditRequisition = () => {
     "1074 - Atomização",
     "1104 - Esmaltação/Decor",
     "2577 - E.T.E",
+    "2291 - Edificio industrial",
+    "2232 - ADM Industrial",
+    "1163 - Classificação",
+    "2348 - Compressores",
+    "2240 - Depto Tecnico",
+    "1619 - Expedição",
+    "1660 - Manutenção Mecânica",
+    "1678 - Manutenção Elétrica",
+    "2330 - Parque Fabri"
   ];
 
   useEffect(() => {
-    if (isLoadingCatalog) return; // Wait for catalog items to load
-
+    if (isLoadingCatalog) return;
+    
+    // Wait for catalog items to load
     const fetchRequisition = async () => {
       const { data, error } = await supabase
         .from('requisitions')
         .select('*')
         .eq('id', id)
         .single();
-
+        
       if (error) {
         toast({
           title: "Erro ao carregar requisição",
@@ -69,7 +71,7 @@ const EditRequisition = () => {
         navigate("/home");
         return;
       }
-
+      
       if (data) {
         setArea(data.area);
         setEquipment(data.equipment);
@@ -79,25 +81,38 @@ const EditRequisition = () => {
         setJustification(data.justification || "");
         setCostCenter(data.cost_center || "");
         setPhotos(data.photos || []);
-
+        
         // Find the catalog item and set category/selectedItemId
         const foundItem = catalogItems.find(
-          (item) => item.item_code === data.item_code && item.item_description === data.item_description
+          (item) => item.item_code === data.item_code && 
+                   item.system_description === data.item_description
         );
+        
         if (foundItem) {
           setCategory(foundItem.category);
           setSelectedItemId(foundItem.id);
+        } else {
+          // If item not found in catalog, try to find by description only
+          const itemByDescription = catalogItems.find(
+            item => item.system_description === data.item_description ||
+                    item.item_description === data.item_description
+          );
+          
+          if (itemByDescription) {
+            setCategory(itemByDescription.category);
+            setSelectedItemId(itemByDescription.id);
+          }
         }
       }
     };
-
+    
     fetchRequisition();
   }, [id, navigate, toast, catalogItems, isLoadingCatalog]);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-
+    
     if (photos.length + files.length > 5) {
       toast({
         title: "Limite de fotos",
@@ -106,7 +121,7 @@ const EditRequisition = () => {
       });
       return;
     }
-
+    
     Array.from(files).forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -123,7 +138,7 @@ const EditRequisition = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
+    
     if (!area || !equipment || !category || !selectedItemId || !problemDescription || !justification || !costCenter || parseInt(quantity) <= 0) {
       toast({
         title: "Campos obrigatórios",
@@ -133,14 +148,14 @@ const EditRequisition = () => {
       setIsLoading(false);
       return;
     }
-
+    
     try {
       const selectedCatalogItem = catalogItems.find(item => item.id === selectedItemId);
-
+      
       if (!selectedCatalogItem) {
         throw new Error("Item do catálogo não encontrado.");
       }
-
+      
       const { error } = await supabase
         .from('requisitions')
         .update({
@@ -156,13 +171,14 @@ const EditRequisition = () => {
           photos
         })
         .eq('id', id);
-
+        
       if (error) throw error;
-
+      
       toast({
         title: "Requisição atualizada!",
         description: "Suas alterações foram salvas com sucesso",
       });
+      
       navigate("/home");
     } catch (error: any) {
       toast({
@@ -222,7 +238,7 @@ const EditRequisition = () => {
           </div>
         </div>
       </header>
-
+      
       <main className="container mx-auto px-4 py-6 max-w-2xl">
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card className="animate-fade-in hover:shadow-md transition-shadow duration-200">
@@ -243,7 +259,7 @@ const EditRequisition = () => {
                   </SelectContent>
                 </Select>
               </div>
-
+              
               <div className="space-y-2">
                 <Label htmlFor="priority">Prioridade *</Label>
                 <Select value={priority} onValueChange={(value) => setPriority(value as Priority)}>
@@ -257,35 +273,35 @@ const EditRequisition = () => {
                   </SelectContent>
                 </Select>
               </div>
-
+              
               <div className="space-y-2">
                 <Label htmlFor="problem">Descrição do Problema *</Label>
-                <Textarea
-                  id="problem"
-                  placeholder="Descreva o problema encontrado..."
-                  value={problemDescription}
-                  onChange={(e) => setProblemDescription(e.target.value)}
-                  rows={4}
-                  required
+                <Textarea 
+                  id="problem" 
+                  placeholder="Descreva o problema encontrado..." 
+                  value={problemDescription} 
+                  onChange={(e) => setProblemDescription(e.target.value)} 
+                  rows={4} 
+                  required 
                   className="transition-all duration-200 focus:shadow-md"
                 />
               </div>
-
+              
               <div className="space-y-2">
                 <Label htmlFor="justification">Justificativa *</Label>
-                <Textarea
-                  id="justification"
-                  placeholder="Justifique a necessidade deste material..."
-                  value={justification}
-                  onChange={(e) => setJustification(e.target.value)}
-                  rows={3}
-                  required
+                <Textarea 
+                  id="justification" 
+                  placeholder="Justifique a necessidade deste material..." 
+                  value={justification} 
+                  onChange={(e) => setJustification(e.target.value)} 
+                  rows={3} 
+                  required 
                   className="transition-all duration-200 focus:shadow-md"
                 />
               </div>
             </CardContent>
           </Card>
-
+          
           <Card className="animate-fade-in hover:shadow-md transition-shadow duration-200">
             <CardHeader>
               <CardTitle>Item Requisitado</CardTitle>
@@ -294,12 +310,15 @@ const EditRequisition = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="area">Área / Setor *</Label>
-                  <Select value={area} onValueChange={(v) => {
-                    setArea(v);
-                    setEquipment("");
-                    setCategory("");
-                    setSelectedItemId("");
-                  }}>
+                  <Select 
+                    value={area} 
+                    onValueChange={(v) => { 
+                      setArea(v); 
+                      setEquipment(""); 
+                      setCategory(""); 
+                      setSelectedItemId(""); 
+                    }}
+                  >
                     <SelectTrigger id="area" className="transition-all duration-200">
                       <SelectValue placeholder="Selecione a área" />
                     </SelectTrigger>
@@ -310,14 +329,18 @@ const EditRequisition = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="equipment">Equipamento *</Label>
-                  <Select value={equipment} onValueChange={(v) => {
-                    setEquipment(v);
-                    setCategory("");
-                    setSelectedItemId("");
-                  }} disabled={!area}>
+                  <Select 
+                    value={equipment} 
+                    onValueChange={(v) => { 
+                      setEquipment(v); 
+                      setCategory(""); 
+                      setSelectedItemId(""); 
+                    }} 
+                    disabled={!area}
+                  >
                     <SelectTrigger id="equipment" className="transition-all duration-200">
                       <SelectValue placeholder={area ? "Selecione o equipamento" : "Selecione a área primeiro"} />
                     </SelectTrigger>
@@ -329,14 +352,18 @@ const EditRequisition = () => {
                   </Select>
                 </div>
               </div>
-
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="category">Categoria *</Label>
-                  <Select value={category} onValueChange={(v) => {
-                    setCategory(v);
-                    setSelectedItemId("");
-                  }} disabled={!equipment}>
+                  <Select 
+                    value={category} 
+                    onValueChange={(v) => { 
+                      setCategory(v); 
+                      setSelectedItemId(""); 
+                    }} 
+                    disabled={!equipment}
+                  >
                     <SelectTrigger id="category" className="transition-all duration-200">
                       <SelectValue placeholder={equipment ? "Selecione a categoria" : "Selecione o equipamento primeiro"} />
                     </SelectTrigger>
@@ -347,24 +374,28 @@ const EditRequisition = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="quantity">Quantidade *</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    required
+                  <Input 
+                    id="quantity" 
+                    type="number" 
+                    min="1" 
+                    value={quantity} 
+                    onChange={(e) => setQuantity(e.target.value)} 
+                    required 
                     className="transition-all duration-200 focus:shadow-md"
                   />
                 </div>
               </div>
-
+              
               <div className="space-y-2">
                 <Label htmlFor="item">Item *</Label>
-                <Select value={selectedItemId} onValueChange={setSelectedItemId} disabled={!category}>
+                <Select 
+                  value={selectedItemId} 
+                  onValueChange={setSelectedItemId} 
+                  disabled={!category}
+                >
                   <SelectTrigger id="item" className="transition-all duration-200">
                     <SelectValue placeholder={category ? "Selecione o item" : "Selecione a categoria primeiro"} />
                   </SelectTrigger>
@@ -377,7 +408,7 @@ const EditRequisition = () => {
                   </SelectContent>
                 </Select>
               </div>
-
+              
               {selectedCatalogItem && (
                 <div className="p-3 bg-muted rounded-lg text-sm">
                   <p><strong>Código:</strong> {selectedCatalogItem.item_code}</p>
@@ -386,7 +417,7 @@ const EditRequisition = () => {
               )}
             </CardContent>
           </Card>
-
+          
           <Card className="animate-fade-in hover:shadow-md transition-shadow duration-200">
             <CardHeader>
               <CardTitle>Fotos (máx. 5)</CardTitle>
@@ -397,10 +428,10 @@ const EditRequisition = () => {
                   {photos.map((photo, index) => (
                     <div key={index} className="relative aspect-square rounded-lg overflow-hidden border animate-scale-in">
                       <img src={photo} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
+                      <Button 
+                        type="button" 
+                        variant="destructive" 
+                        size="icon" 
                         className="absolute top-1 right-1 h-6 w-6 transition-all duration-200 hover:scale-110"
                         onClick={() => removePhoto(index)}
                       >
@@ -410,34 +441,34 @@ const EditRequisition = () => {
                   ))}
                 </div>
               )}
-
+              
               {photos.length < 5 && (
-                <Label
-                  htmlFor="photos"
+                <Label 
+                  htmlFor="photos" 
                   className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-8 cursor-pointer hover:bg-muted/50 transition-all duration-200"
                 >
                   <Camera className="w-8 h-8 text-muted-foreground mb-2" />
                   <span className="text-sm text-muted-foreground">Adicionar foto</span>
-                  <Input
-                    id="photos"
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={handlePhotoUpload}
-                    multiple
+                  <Input 
+                    id="photos" 
+                    type="file" 
+                    accept="image/*" 
+                    capture="environment" 
+                    className="hidden" 
+                    onChange={handlePhotoUpload} 
+                    multiple 
                   />
                 </Label>
               )}
             </CardContent>
           </Card>
-
+          
           <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 transition-all duration-200 hover:bg-accent"
-              onClick={() => navigate("/home")}
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="flex-1 transition-all duration-200 hover:bg-accent" 
+              onClick={() => navigate("/home")} 
               disabled={isLoading}
             >
               Cancelar
