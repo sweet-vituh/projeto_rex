@@ -24,6 +24,9 @@ import EpiInbox from "./pages/epi/EpiInbox";
 import EpiRequisitionDetail from "./pages/epi/EpiRequisitionDetail";
 import SafetyDashboard from "./pages/epi/SafetyDashboard";
 
+// Stock Module
+import StockDashboard from "./pages/stock/StockDashboard";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -143,6 +146,16 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={["safety_tech"]}>
                     <SafetyDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Módulo de Almoxarifado */}
+              <Route
+                path="/stock/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["almoxarifado"]}>
+                    <StockDashboard />
                   </ProtectedRoute>
                 }
               />

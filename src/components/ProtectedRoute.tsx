@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ("pcm" | "mechanic" | "admin" | "safety_tech")[];
+  allowedRoles?: ("pcm" | "mechanic" | "admin" | "safety_tech" | "almoxarifado")[];
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
@@ -35,6 +35,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         navigate("/inbox", { replace: true });
       } else if (role === "safety_tech") {
         navigate("/epi/dashboard", { replace: true });
+      } else if (role === "almoxarifado") {
+        navigate("/stock/dashboard", { replace: true });
       } else {
         navigate("/home", { replace: true });
       }

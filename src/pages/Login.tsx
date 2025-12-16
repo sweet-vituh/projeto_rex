@@ -9,9 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { loginSchema } from "@/lib/validations";
 import logo from "@/assets/logo.png";
-import { HardHat, Wrench, ArrowLeft } from "lucide-react";
+import { HardHat, Wrench, ArrowLeft, Package } from "lucide-react";
 
-type ModuleType = "materials" | "epi" | null;
+type ModuleType = "materials" | "epi" | "stock" | null;
 
 const Login = () => {
   const [selectedModule, setSelectedModule] = useState<ModuleType>(null);
@@ -47,6 +47,8 @@ const Login = () => {
       navigate("/admin", { replace: true });
     } else if (role === "safety_tech") {
       navigate("/epi/dashboard", { replace: true });
+    } else if (role === "almoxarifado") {
+      navigate("/stock/dashboard", { replace: true });
     } else if (role === "pcm") {
       if (selectedModule === "epi") {
         navigate("/epi/inbox", { replace: true });
@@ -154,7 +156,7 @@ const Login = () => {
 
         toast({
           title: "Login realizado!",
-          description: `Bem-vindo ao Rex ${selectedModule === 'epi' ? 'EPI' : ''}!`,
+          description: `Bem-vindo ao Rex!`,
         });
 
         handleRedirect(roleData.role);
@@ -186,7 +188,7 @@ const Login = () => {
           <p className="text-muted-foreground text-lg">Selecione o módulo para acessar</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 w-full max-w-4xl">
+        <div className="grid md:grid-cols-3 gap-6 w-full max-w-5xl">
           <Card 
             className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 hover:border-primary/50"
             onClick={() => setSelectedModule("materials")}
@@ -196,9 +198,9 @@ const Login = () => {
                 <Wrench className="w-10 h-10 text-primary" />
               </div>
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold">Requisições de Materiais</h2>
-                <p className="text-muted-foreground">
-                  Solicitação de peças e materiais para manutenção geral.
+                <h2 className="text-2xl font-bold">Materiais</h2>
+                <p className="text-muted-foreground text-sm">
+                  Requisição de peças para manutenção.
                 </p>
               </div>
             </CardContent>
@@ -213,9 +215,26 @@ const Login = () => {
                 <HardHat className="w-10 h-10 text-orange-500" />
               </div>
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold">Requisições de EPI</h2>
-                <p className="text-muted-foreground">
-                  Solicitação de Equipamentos de Proteção Individual.
+                <h2 className="text-2xl font-bold">EPI</h2>
+                <p className="text-muted-foreground text-sm">
+                  Solicitação e gestão de EPIs.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 hover:border-blue-500/50"
+            onClick={() => setSelectedModule("stock")}
+          >
+            <CardContent className="p-8 flex flex-col items-center text-center space-y-6">
+              <div className="w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                <Package className="w-10 h-10 text-blue-500" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold">Almoxarifado</h2>
+                <p className="text-muted-foreground text-sm">
+                  Controle de estoque e inventário.
                 </p>
               </div>
             </CardContent>
@@ -247,19 +266,25 @@ const Login = () => {
       <Card className="w-full max-w-md shadow-lg animate-scale-in">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center ${selectedModule === 'epi' ? 'bg-orange-500/10' : 'bg-primary/10'}`}>
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+              selectedModule === 'epi' ? 'bg-orange-500/10' : 
+              selectedModule === 'stock' ? 'bg-blue-500/10' : 
+              'bg-primary/10'
+            }`}>
               {selectedModule === 'epi' ? (
-                <HardHat className={`w-8 h-8 ${selectedModule === 'epi' ? 'text-orange-500' : 'text-primary'}`} />
+                <HardHat className="w-8 h-8 text-orange-500" />
+              ) : selectedModule === 'stock' ? (
+                <Package className="w-8 h-8 text-blue-500" />
               ) : (
                 <img src={logo} alt="Rex Logo" className="w-10 h-10 object-contain" />
               )}
             </div>
           </div>
           <CardTitle className="text-3xl font-bold">
-            {selectedModule === 'epi' ? 'Rex EPI' : 'Rex Materiais'}
+            {selectedModule === 'epi' ? 'Rex EPI' : selectedModule === 'stock' ? 'Almoxarifado' : 'Rex Materiais'}
           </CardTitle>
           <CardDescription>
-            {isSignUp ? "Criar nova conta de usuário" : `Acesso ao módulo de ${selectedModule === 'epi' ? 'EPIs' : 'Materiais'}`}
+            {isSignUp ? "Criar nova conta de usuário" : "Acesso restrito ao sistema"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -304,7 +329,10 @@ const Login = () => {
             </div>
             <Button 
               type="submit" 
-              className={`w-full transition-all duration-200 hover:scale-105 ${selectedModule === 'epi' ? 'bg-orange-500 hover:bg-orange-600' : ''}`} 
+              className={`w-full transition-all duration-200 hover:scale-105 ${
+                selectedModule === 'epi' ? 'bg-orange-500 hover:bg-orange-600' : 
+                selectedModule === 'stock' ? 'bg-blue-600 hover:bg-blue-700' : ''
+              }`} 
               disabled={isLoading}
             >
               {isLoading ? (isSignUp ? "Cadastrando..." : "Entrando...") : (isSignUp ? "Cadastrar" : "Entrar")}
