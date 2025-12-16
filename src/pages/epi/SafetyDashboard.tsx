@@ -27,9 +27,11 @@ const SafetyDashboard = () => {
   const [stockItems, setStockItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
 
   const fetchData = async () => {
     setIsLoading(true);
+    setErrorDetails(null);
     try {
       // 1. Buscar Requisições
       const { data: reqData, error: reqError } = await supabase
@@ -37,7 +39,7 @@ const SafetyDashboard = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (reqError) throw reqError;
+      if (reqError) throw new Error(`Erro ao buscar requisições: ${reqError.message}`);
 
       // 2. Buscar Usuários (para mapear nomes)
       const userIds = [...new Set(reqData.map((r: any) => r.created_by))];
@@ -49,7 +51,9 @@ const SafetyDashboard = () => {
           .select('user_id, username')
           .in('user_id', userIds);
           
-        if (!usersError && usersData) {
+        if (usersError) {
+             console.warn("Erro ao buscar usuários (permissão?):", usersError);
+        } else if (usersData) {
           usersData.forEach((u: any) => {
             userMap[u.user_id] = u.username;
           });
@@ -68,14 +72,15 @@ const SafetyDashboard = () => {
         .select('*')
         .order('item_name');
 
-      if (stockError) throw stockError;
+      if (stockError) throw new Error(`Erro ao buscar estoque: ${stockError.message}`);
       setStockItems(stockData || []);
 
     } catch (error: any) {
       console.error("Erro no dashboard:", error);
+      setErrorDetails(error.message);
       toast({ 
         title: "Erro ao carregar dados", 
-        description: error.message || "Verifique sua conexão e permissões.", 
+        description: error.message, 
         variant: "destructive" 
       });
     } finally {
@@ -111,8 +116,8 @@ const SafetyDashboard = () => {
 
       toast({ title: `Status atualizado para ${newStatus.replace('_', ' ')}` });
       fetchData();
-    } catch (error) {
-      toast({ title: "Erro ao atualizar", variant: "destructive" });
+    } catch (error: any) {
+      toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
     }
   };
 
@@ -151,6 +156,15 @@ const SafetyDashboard = () => {
 
       <main className="container mx-auto px-4 py-6 space-y-6">
         
+        {/* Error Alert */}
+        {errorDetails && (
+            <div className="bg-destructive/10 border border-destructive text-destructive p-4 rounded-md">
+                <h4 className="font-bold">Erro de Carregamento</h4>
+                <p>{errorDetails}</p>
+                <Button variant="outline" size="sm" className="mt-2" onClick={fetchData}>Tentar Novamente</Button>
+            </div>
+        )}
+
         {/* Mobile Action Button */}
         <div className="md:hidden">
           <Button variant="outline" className="w-full" onClick={() => navigate("/modules")}>

@@ -75,7 +75,7 @@ const StockDashboard = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // 1. Fetch Stock
+      // 1. Fetch Stock (Simples, sem joins)
       const { data: stockData, error: stockError } = await supabase
         .from('epi_stock')
         .select('*')
@@ -84,47 +84,58 @@ const StockDashboard = () => {
       if (stockError) throw stockError;
       setStockItems(stockData || []);
 
-      // 2. Fetch Recent Movements (sem join com user_roles para evitar erros)
+      // 2. Fetch Recent Movements (Simples, sem joins)
       const { data: moveData, error: moveError } = await supabase
         .from('epi_stock_movements')
-        .select(`
-          *,
-          epi_stock (item_name, item_type)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (moveError) throw moveError;
 
-      // 3. Fetch Users
+      // 3. Resolver relacionamentos manualmente no frontend
+      // IDs necessários
       const userIds = [...new Set(moveData.map((m: any) => m.user_id))];
+      // Mapeamento de usuários
       let userMap: Record<string, string> = {};
       
       if (userIds.length > 0) {
-        const { data: usersData, error: usersError } = await supabase
+        const { data: usersData } = await supabase
           .from('user_roles')
           .select('user_id, username')
           .in('user_id', userIds);
           
-        if (!usersError && usersData) {
+        if (usersData) {
           usersData.forEach((u: any) => {
             userMap[u.user_id] = u.username;
           });
         }
       }
+
+      // Mapeamento de itens de estoque (usando os dados já carregados em stockData)
+      let stockMap: Record<string, any> = {};
+      stockData.forEach((item: any) => {
+        stockMap[item.id] = item;
+      });
       
-      const formattedMovements = moveData.map((m: any) => ({
-        ...m,
-        item_name: m.epi_stock?.item_name || 'Item Removido',
-        username: userMap[m.user_id] || 'Usuário'
-      }));
+      // Combinar tudo
+      const formattedMovements = moveData.map((m: any) => {
+        const stockItem = stockMap[m.stock_item_id];
+        return {
+          ...m,
+          item_name: stockItem ? stockItem.item_name : 'Item Removido/Desconhecido',
+          item_type: stockItem ? stockItem.item_type : '',
+          username: userMap[m.user_id] || 'Usuário'
+        };
+      });
+
       setMovements(formattedMovements);
 
     } catch (error: any) {
       console.error("Erro no dashboard estoque:", error);
       toast({ 
         title: "Erro ao carregar dados", 
-        description: error.message, 
+        description: error.message || "Erro desconhecido", 
         variant: "destructive" 
       });
     } finally {
