@@ -4,31 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
   LogOut, 
-  HardHat, 
   AlertTriangle, 
   CheckCircle2, 
   Clock, 
-  Search, 
-  Package, 
-  TrendingUp, 
-  XCircle,
   Box,
-  Plus,
   LayoutGrid
 } from "lucide-react";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 const SafetyDashboard = () => {
   const navigate = useNavigate();
-  const { user, username, signOut } = useAuth();
+  const { username, signOut } = useAuth();
   const { toast } = useToast();
   
   const [requisitions, setRequisitions] = useState<any[]>([]);
@@ -90,7 +82,7 @@ const SafetyDashboard = () => {
     navigate("/");
   };
 
-  const updateStatus = async (id: string, newStatus: string, quantity: number, itemId: string | null) => {
+  const updateStatus = async (id: string, newStatus: string) => {
     try {
       const { error } = await supabase
         .from('epi_requisitions')
@@ -245,21 +237,21 @@ const SafetyDashboard = () => {
                       <div className="flex flex-col gap-2 min-w-[140px]">
                         {req.status === 'pendente' && (
                           <>
-                            <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => updateStatus(req.id, 'em_separacao', req.quantity, null)}>
-                              Iniciar Separação
+                            <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => updateStatus(req.id, 'em_separacao')}>
+                              Aprovar / Separar
                             </Button>
-                            <Button size="sm" variant="destructive" className="w-full" onClick={() => updateStatus(req.id, 'rejeitado', 0, null)}>
+                            <Button size="sm" variant="destructive" className="w-full" onClick={() => updateStatus(req.id, 'rejeitado')}>
                               Recusar
                             </Button>
                           </>
                         )}
                         {req.status === 'em_separacao' && (
-                          <Button size="sm" className="w-full bg-purple-600 hover:bg-purple-700" onClick={() => updateStatus(req.id, 'aguardando_retirada', req.quantity, null)}>
+                          <Button size="sm" className="w-full bg-purple-600 hover:bg-purple-700" onClick={() => updateStatus(req.id, 'aguardando_retirada')}>
                             Pronto p/ Retirada
                           </Button>
                         )}
                         {req.status === 'aguardando_retirada' && (
-                          <Button size="sm" className="w-full bg-green-600 hover:bg-green-700" onClick={() => updateStatus(req.id, 'concluido', req.quantity, null)}>
+                          <Button size="sm" className="w-full bg-green-600 hover:bg-green-700" onClick={() => updateStatus(req.id, 'concluido')}>
                             Confirmar Entrega
                           </Button>
                         )}
@@ -279,7 +271,7 @@ const SafetyDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Stock Tab - READ ONLY */}
+          {/* Stock Tab - READ ONLY FOR SAFETY TECH */}
           <TabsContent value="stock">
              <Card>
               <CardHeader>
