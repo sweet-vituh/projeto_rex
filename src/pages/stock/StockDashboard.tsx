@@ -27,10 +27,22 @@ import {
   History,
   Box,
   Plus,
-  LayoutGrid
+  LayoutGrid,
+  Pencil
 } from "lucide-react";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+
+const EPI_TYPES = [
+  "Uniforme",
+  "Calçado",
+  "Luva",
+  "Óculos",
+  "Protetor Auricular",
+  "Capacete",
+  "Máscara",
+  "Cinto de Segurança",
+  "Outros"
+];
 
 const StockDashboard = () => {
   const navigate = useNavigate();
@@ -41,11 +53,24 @@ const StockDashboard = () => {
   const [movements, setMovements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  
+  // Movement Modal State
   const [movementModalOpen, setMovementModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [movementType, setMovementType] = useState<"ENTRY" | "EXIT">("ENTRY");
   const [movementQty, setMovementQty] = useState("");
   const [movementReason, setMovementReason] = useState("");
+
+  // Item Modal State (Add/Edit)
+  const [itemModalOpen, setItemModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    item_name: "",
+    item_type: "",
+    size: "",
+    current_quantity: "0",
+    min_quantity: "5"
+  });
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -96,6 +121,7 @@ const StockDashboard = () => {
     navigate("/");
   };
 
+  // Movement Logic
   const openMovementModal = (item: any, type: "ENTRY" | "EXIT") => {
     setSelectedItem(item);
     setMovementType(type);
@@ -148,6 +174,76 @@ const StockDashboard = () => {
 
     } catch (error: any) {
       toast({ title: "Erro ao registrar", description: error.message, variant: "destructive" });
+    }
+  };
+
+  // Item Logic (Add/Edit)
+  const openItemModal = (item: any = null) => {
+    if (item) {
+      setEditingItem(item);
+      setFormData({
+        item_name: item.item_name,
+        item_type: item.item_type,
+        size: item.size || "",
+        current_quantity: item.current_quantity.toString(),
+        min_quantity: item.min_quantity.toString()
+      });
+    } else {
+      setEditingItem(null);
+      setFormData({
+        item_name: "",
+        item_type: "",
+        size: "",
+        current_quantity: "0",
+        min_quantity: "5"
+      });
+    }
+    setItemModalOpen(true);
+  };
+
+  const handleItemSubmit = async () => {
+    if (!formData.item_name || !formData.item_type || !formData.current_quantity || !formData.min_quantity) {
+      toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
+      return;
+    }
+
+    try {
+      if (editingItem) {
+        // Update
+        const { error } = await supabase
+          .from('epi_stock')
+          .update({
+            item_name: formData.item_name,
+            item_type: formData.item_type,
+            size: formData.size || null,
+            current_quantity: parseInt(formData.current_quantity),
+            min_quantity: parseInt(formData.min_quantity),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingItem.id);
+
+        if (error) throw error;
+        toast({ title: "Item atualizado com sucesso!" });
+      } else {
+        // Create
+        const { error } = await supabase
+          .from('epi_stock')
+          .insert({
+            item_name: formData.item_name,
+            item_type: formData.item_type,
+            size: formData.size || null,
+            current_quantity: parseInt(formData.current_quantity),
+            min_quantity: parseInt(formData.min_quantity)
+          });
+
+        if (error) throw error;
+        toast({ title: "Item adicionado ao estoque!" });
+      }
+      
+      setItemModalOpen(false);
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
     }
   };
 
@@ -210,7 +306,14 @@ const StockDashboard = () => {
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <Package className="w-5 h-5" /> Inventário
               </h2>
-              <div className="relative w-full max-w-xs">
+              <div className="flex gap-2">
+                 <Button onClick={() => openItemModal()}>
+                  <Plus className="w-4 h-4 mr-2" /> Novo Item
+                </Button>
+              </div>
+            </div>
+            
+            <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input 
                   placeholder="Buscar item..." 
@@ -218,7 +321,6 @@ const StockDashboard = () => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
-              </div>
             </div>
 
             <div className="grid gap-3">
@@ -228,14 +330,24 @@ const StockDashboard = () => {
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="font-bold">{item.item_name}</h3>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6" 
+                            onClick={() => openItemModal(item)}
+                        >
+                            <Pencil className="w-3 h-3 text-muted-foreground" />
+                        </Button>
+                      </div>
+                      <div className="flex gap-2 items-center mt-1">
                         {item.current_quantity <= item.min_quantity && (
                           <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">Baixo</Badge>
                         )}
+                        <p className="text-sm text-muted-foreground">
+                            {item.item_type} {item.size && `• Tam: ${item.size}`}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {item.item_type} {item.size && `• Tam: ${item.size}`}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         Mínimo: {item.min_quantity}
                       </p>
                     </div>
@@ -362,6 +474,81 @@ const StockDashboard = () => {
               className={movementType === "ENTRY" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
             >
               Confirmar {movementType === "ENTRY" ? "Entrada" : "Saída"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Item Modal (Add/Edit) */}
+      <Dialog open={itemModalOpen} onOpenChange={setItemModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingItem ? "Editar Item" : "Novo Item"}</DialogTitle>
+            <DialogDescription>
+              {editingItem ? "Atualize as informações do item." : "Cadastre um novo item no estoque."}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Tipo de EPI *</Label>
+              <Select 
+                value={formData.item_type} 
+                onValueChange={(v) => setFormData(prev => ({ ...prev, item_type: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {EPI_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Nome / Descrição *</Label>
+              <Input 
+                value={formData.item_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, item_name: e.target.value }))}
+                placeholder="Ex: Luva de Raspa"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tamanho (Opcional)</Label>
+              <Input 
+                value={formData.size}
+                onChange={(e) => setFormData(prev => ({ ...prev, size: e.target.value }))}
+                placeholder="Ex: G, 42, Único"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Quantidade Atual *</Label>
+                <Input 
+                  type="number" 
+                  min="0"
+                  value={formData.current_quantity}
+                  onChange={(e) => setFormData(prev => ({ ...prev, current_quantity: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Qtd. Mínima *</Label>
+                <Input 
+                  type="number" 
+                  min="0"
+                  value={formData.min_quantity}
+                  onChange={(e) => setFormData(prev => ({ ...prev, min_quantity: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setItemModalOpen(false)}>Cancelar</Button>
+            <Button onClick={handleItemSubmit}>
+              {editingItem ? "Salvar Alterações" : "Adicionar Item"}
             </Button>
           </DialogFooter>
         </DialogContent>

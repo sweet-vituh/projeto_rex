@@ -92,9 +92,6 @@ const SafetyDashboard = () => {
 
   const updateStatus = async (id: string, newStatus: string, quantity: number, itemId: string | null) => {
     try {
-      // Se for entregar, verificar e deduzir estoque (se houver link com estoque - simplificado por nome/tipo aqui)
-      // Para simplificar, apenas atualiza status. Numa versão v2 faríamos a baixa automática.
-      
       const { error } = await supabase
         .from('epi_requisitions')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
@@ -282,20 +279,18 @@ const SafetyDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Stock Tab */}
+          {/* Stock Tab - READ ONLY */}
           <TabsContent value="stock">
              <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader>
                 <CardTitle>Estoque Atual</CardTitle>
-                <Button size="sm" onClick={() => toast({ title: "Funcionalidade em desenvolvimento", description: "A adição de itens será implementada na próxima etapa." })}>
-                  <Plus className="w-4 h-4 mr-2" /> Novo Item
-                </Button>
+                <CardDescription>Visualização do inventário de EPIs</CardDescription>
               </CardHeader>
               <CardContent>
                 {stockItems.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Box className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    Estoque vazio. Adicione itens.
+                    Estoque vazio.
                   </div>
                 ) : (
                   <div className="space-y-2">
