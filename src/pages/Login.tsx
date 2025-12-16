@@ -34,10 +34,6 @@ const Login = () => {
           navigate("/admin", { replace: true });
         } else if (roleData?.role === "pcm") {
           navigate("/inbox", { replace: true });
-        } else if (roleData?.role === "tecnico_seguranca") {
-          navigate("/security-dashboard", { replace: true });
-        } else if (roleData?.role === "almoxarifado") {
-          navigate("/warehouse-dashboard", { replace: true });
         } else if (roleData?.role === "mechanic") {
           navigate("/home", { replace: true });
         }
@@ -66,7 +62,9 @@ const Login = () => {
     return true;
   };
 
-  const handleLogin = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!validateForm()) {
       return;
     }
@@ -74,118 +72,98 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const email = `${username.toLowerCase().trim()}@rexapp.com`;
+      // Convert username to email format using a valid dummy domain
+      const email = `${username.toLowerCase().trim()}@rexapp.com`; // Alterado para um domínio válido
 
-      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        if (signInError.message.includes("Invalid login credentials")) {
-          throw new Error("Usuário ou senha incorretos");
-        }
-        throw signInError;
-      }
-
-      const { data: roleData, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role, username")
-        .eq("user_id", authData.user.id)
-        .maybeSingle();
-
-      if (roleError) throw roleError;
-
-      if (!roleData) {
-        await supabase.auth.signOut();
-        throw new Error("Usuário não autorizado");
-      }
-
-      toast({
-        title: "Login realizado!",
-        description: "Bem-vindo ao Rex!",
-      });
-
-      // Redirect based on role from database
-      if (roleData.role === "admin") {
-        navigate("/admin", { replace: true });
-      } else if (roleData.role === "pcm") {
-        navigate("/inbox", { replace: true });
-      } else if (roleData.role === "tecnico_seguranca") {
-        navigate("/security-dashboard", { replace: true });
-      } else if (roleData.role === "almoxarifado") {
-        navigate("/warehouse-dashboard", { replace: true });
-      } else {
-        navigate("/home", { replace: true });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Erro ao fazer login",
-        description: error.message || "Tente novamente",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSignUp = async () => {
-    if (!validateForm()) {
-      return;
-    }
-    
-    setIsLoading(true);
-
-    try {
-      const email = `${username.toLowerCase().trim()}@rexapp.com`;
-
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (signUpError) {
-        if (signUpError.message.includes("already registered")) {
-          throw new Error("Este usuário já está cadastrado");
-        }
-        throw signUpError;
-      }
-
-      if (authData.user) {
-        const { error: roleError } = await supabase.rpc('create_user_role', {
-          _user_id: authData.user.id,
-          _username: username.trim()
+      if (isSignUp) {
+        // Create account - ALWAYS as mechanic (security fix)
+        const { data: authData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            // emailRedirectTo: `${window.location.origin}/home` // Removido, pois domínios .local não são válidos para confirmação de e-mail
+          }
         });
 
-        if (roleError) {
+        if (signUpError) {
+          if (signUpError.message.includes("already registered")) {
+            throw new Error("Este usuário já está cadastrado");
+          }
+          throw signUpError;
+        }
+
+        // Create role entry using secure RPC function - always creates as mechanic
+        if (authData.user) {
+          const { error: roleError } = await supabase.rpc('create_user_role', {
+            _user_id: authData.user.id,
+            _username: username.trim()
+          });
+
+          if (roleError) {
+            // If role creation fails, we should clean up the auth user
+            await supabase.auth.signOut();
+            throw new Error("Erro ao criar perfil de usuário");
+          }
+        }
+
+        toast({
+          title: "Cadastro realizado!",
+          description: "Você já pode fazer login.",
+        });
+        setIsSignUp(false);
+        setPassword("");
+      } else {
+        // Login
+        const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (signInError) {
+          if (signInError.message.includes("Invalid login credentials")) {
+            throw new Error("Usuário ou senha incorretos");
+          }
+          throw signInError;
+        }
+
+        // Fetch user role from database (server-side source of truth)
+        const { data: roleData, error: roleError } = await supabase
+          .from("user_roles")
+          .select("role, username")
+          .eq("user_id", authData.user.id)
+          .maybeSingle();
+
+        if (roleError) throw roleError;
+
+        // Verify user has a role
+        if (!roleData) {
           await supabase.auth.signOut();
-          throw new Error("Erro ao criar perfil de usuário");
+          throw new Error("Usuário não autorizado");
+        }
+
+        toast({
+          title: "Login realizado!",
+          description: "Bem-vindo ao Rex!",
+        });
+
+        // Redirect based on role from database
+        if (roleData.role === "admin") {
+          navigate("/admin", { replace: true });
+        } else if (roleData.role === "pcm") {
+          navigate("/inbox", { replace: true });
+        } else {
+          navigate("/home", { replace: true });
         }
       }
-
-      toast({
-        title: "Cadastro realizado!",
-        description: "Você já pode fazer login.",
-      });
-      setIsSignUp(false);
-      setPassword("");
     } catch (error: any) {
       toast({
-        title: "Erro ao cadastrar",
+        title: isSignUp ? "Erro ao cadastrar" : "Erro ao fazer login",
         description: error.message || "Tente novamente",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleMaterialRequisitions = async () => {
-    await handleLogin();
-  };
-
-  const handleEpiRequisitions = async () => {
-    await handleLogin();
   };
 
   return (
@@ -200,11 +178,11 @@ const Login = () => {
           </div>
           <CardTitle className="text-3xl font-bold">Rex</CardTitle>
           <CardDescription>
-            {isSignUp ? "Criar nova conta de usuário" : "Sistema de Requisição de Materiais e EPI"}
+            {isSignUp ? "Criar nova conta de usuário" : "Sistema de Requisição de Materiais"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={(e) => { e.preventDefault(); isSignUp ? handleSignUp() : handleLogin(); }} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">Usuário</Label>
               <Input
@@ -243,37 +221,9 @@ const Login = () => {
                 <p className="text-sm text-destructive">{validationErrors.password}</p>
               )}
             </div>
-            {isSignUp ? (
-              <Button type="submit" className="w-full transition-all duration-200 hover:scale-105" disabled={isLoading}>
-                {isLoading ? "Cadastrando..." : "Cadastrar"}
-              </Button>
-            ) : (
-              <>
-                <Button type="submit" className="w-full transition-all duration-200 hover:scale-105" disabled={isLoading}>
-                  {isLoading ? "Entrando..." : "Entrar"}
-                </Button>
-                <div className="space-y-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full h-16 text-base font-semibold transition-all duration-200 hover:scale-105"
-                    onClick={handleMaterialRequisitions}
-                    disabled={isLoading}
-                  >
-                    Requisições de Materiais
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full h-16 text-base font-semibold transition-all duration-200 hover:scale-105"
-                    onClick={handleEpiRequisitions}
-                    disabled={isLoading}
-                  >
-                    Requisições de EPI
-                  </Button>
-                </div>
-              </>
-            )}
+            <Button type="submit" className="w-full transition-all duration-200 hover:scale-105" disabled={isLoading}>
+              {isLoading ? (isSignUp ? "Cadastrando..." : "Entrando...") : (isSignUp ? "Cadastrar" : "Entrar")}
+            </Button>
             <Button
               type="button"
               variant="ghost"

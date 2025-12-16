@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ("pcm" | "mechanic" | "admin" | "tecnico_seguranca" | "almoxarifado")[];
+  allowedRoles?: ("pcm" | "mechanic" | "admin")[];
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
@@ -27,16 +27,12 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     }
 
     // If specific roles are required and user doesn't have one of them
-    if (allowedRoles && !allowedRoles.includes(role as "pcm" | "mechanic" | "admin" | "tecnico_seguranca" | "almoxarifado")) {
+    if (allowedRoles && !allowedRoles.includes(role as "pcm" | "mechanic" | "admin")) {
       // Redirect to the appropriate home based on their actual role
       if (role === "admin") {
         navigate("/admin", { replace: true });
       } else if (role === "pcm") {
         navigate("/inbox", { replace: true });
-      } else if (role === "tecnico_seguranca") {
-        navigate("/security-dashboard", { replace: true });
-      } else if (role === "almoxarifado") {
-        navigate("/warehouse-dashboard", { replace: true });
       } else {
         navigate("/home", { replace: true });
       }
@@ -57,7 +53,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return null;
   }
 
-  if (allowedRoles && !allowedRoles.includes(role as "pcm" | "mechanic" | "admin" | "tecnico_seguranca" | "almoxarifado")) {
+  if (allowedRoles && !allowedRoles.includes(role as "pcm" | "mechanic" | "admin")) {
     return null;
   }
 
