@@ -6,23 +6,12 @@ export function RexLogo() {
   const { role } = useAuth();
 
   const handleClick = () => {
-    switch (role) {
-      case "admin":
-        navigate("/admin");
-        break;
-      case "safety_tech":
-        navigate("/epi/dashboard");
-        break;
-      case "almoxarifado":
-        navigate("/stock/dashboard");
-        break;
-      case "pcm":
-        navigate("/inbox");
-        break;
-      case "mechanic":
-      default:
-        navigate("/modules");
-        break;
+    if (role === "admin") {
+      navigate("/admin");
+    } else if (role === "pcm") {
+      navigate("/inbox");
+    } else {
+      navigate("/home");
     }
   };
 

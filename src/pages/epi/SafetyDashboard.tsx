@@ -11,11 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
   LogOut, 
+  HardHat, 
   AlertTriangle, 
   CheckCircle2, 
   Clock, 
   Search, 
-  Plus,
+  Package, 
+  TrendingUp, 
+  XCircle,
   Box
 } from "lucide-react";
 import { format } from "date-fns";
@@ -87,6 +90,9 @@ const SafetyDashboard = () => {
 
   const updateStatus = async (id: string, newStatus: string, quantity: number, itemId: string | null) => {
     try {
+      // Se for entregar, verificar e deduzir estoque (se houver link com estoque - simplificado por nome/tipo aqui)
+      // Para simplificar, apenas atualiza status. Numa versão v2 faríamos a baixa automática.
+      
       const { error } = await supabase
         .from('epi_requisitions')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
@@ -122,9 +128,6 @@ const SafetyDashboard = () => {
             <p className="text-sm text-muted-foreground">Bem-vindo, {username}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate("/modules")} className="hidden md:flex">
-              <Plus className="w-4 h-4 mr-2" /> Fazer Requisição
-            </Button>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="w-5 h-5" />
@@ -134,14 +137,6 @@ const SafetyDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
-        
-        {/* Mobile Action Button */}
-        <div className="md:hidden">
-          <Button className="w-full" onClick={() => navigate("/modules")}>
-            <Plus className="w-4 h-4 mr-2" /> Fazer Requisição
-          </Button>
-        </div>
-
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="border-l-4 border-l-yellow-500">
