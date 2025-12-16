@@ -22,21 +22,34 @@ const EpiInbox = () => {
   const fetchRequisitions = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // 1. Fetch Requisitions
+      const { data: reqData, error: reqError } = await supabase
         .from('epi_requisitions')
-        .select(`
-          *,
-          user_roles (
-            username
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (reqError) throw reqError;
+
+      // 2. Fetch Users to Map Names
+      const userIds = [...new Set(reqData.map((item: any) => item.created_by))];
+      let userMap: Record<string, string> = {};
+
+      if (userIds.length > 0) {
+        const { data: userData, error: userError } = await supabase
+          .from('user_roles')
+          .select('user_id, username')
+          .in('user_id', userIds);
+          
+        if (!userError && userData) {
+          userData.forEach((u: any) => {
+            userMap[u.user_id] = u.username;
+          });
+        }
+      }
       
-      const formattedData = data.map((item: any) => ({
+      const formattedData = reqData.map((item: any) => ({
         ...item,
-        requester_name: item.user_roles?.username || 'Usuário Desconhecido'
+        requester_name: userMap[item.created_by] || 'Usuário Desconhecido'
       }));
 
       setRequisitions(formattedData);

@@ -75,7 +75,7 @@ const StockDashboard = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch Stock
+      // 1. Fetch Stock
       const { data: stockData, error: stockError } = await supabase
         .from('epi_stock')
         .select('*')
@@ -84,29 +84,49 @@ const StockDashboard = () => {
       if (stockError) throw stockError;
       setStockItems(stockData || []);
 
-      // Fetch Recent Movements
+      // 2. Fetch Recent Movements (sem join com user_roles para evitar erros)
       const { data: moveData, error: moveError } = await supabase
         .from('epi_stock_movements')
         .select(`
           *,
-          epi_stock (item_name, item_type),
-          user_roles (username)
+          epi_stock (item_name, item_type)
         `)
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (moveError) throw moveError;
+
+      // 3. Fetch Users
+      const userIds = [...new Set(moveData.map((m: any) => m.user_id))];
+      let userMap: Record<string, string> = {};
+      
+      if (userIds.length > 0) {
+        const { data: usersData, error: usersError } = await supabase
+          .from('user_roles')
+          .select('user_id, username')
+          .in('user_id', userIds);
+          
+        if (!usersError && usersData) {
+          usersData.forEach((u: any) => {
+            userMap[u.user_id] = u.username;
+          });
+        }
+      }
       
       const formattedMovements = moveData.map((m: any) => ({
         ...m,
         item_name: m.epi_stock?.item_name || 'Item Removido',
-        username: m.user_roles?.username || 'Usuário'
+        username: userMap[m.user_id] || 'Usuário'
       }));
       setMovements(formattedMovements);
 
-    } catch (error) {
-      console.error(error);
-      toast({ title: "Erro ao carregar dados", variant: "destructive" });
+    } catch (error: any) {
+      console.error("Erro no dashboard estoque:", error);
+      toast({ 
+        title: "Erro ao carregar dados", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     } finally {
       setIsLoading(false);
     }

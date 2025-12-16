@@ -31,35 +31,53 @@ const SafetyDashboard = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch Requisitions
+      // 1. Buscar Requisições
       const { data: reqData, error: reqError } = await supabase
         .from('epi_requisitions')
-        .select(`
-          *,
-          user_roles (username)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (reqError) throw reqError;
+
+      // 2. Buscar Usuários (para mapear nomes)
+      const userIds = [...new Set(reqData.map((r: any) => r.created_by))];
+      let userMap: Record<string, string> = {};
+      
+      if (userIds.length > 0) {
+        const { data: usersData, error: usersError } = await supabase
+          .from('user_roles')
+          .select('user_id, username')
+          .in('user_id', userIds);
+          
+        if (!usersError && usersData) {
+          usersData.forEach((u: any) => {
+            userMap[u.user_id] = u.username;
+          });
+        }
+      }
       
       const formattedReqs = reqData.map((r: any) => ({
         ...r,
-        requester_name: r.user_roles?.username || 'Desconhecido'
+        requester_name: userMap[r.created_by] || 'Desconhecido'
       }));
       setRequisitions(formattedReqs);
 
-      // Fetch Stock
+      // 3. Buscar Estoque
       const { data: stockData, error: stockError } = await supabase
         .from('epi_stock')
         .select('*')
         .order('item_name');
 
       if (stockError) throw stockError;
-      setStockItems(stockData);
+      setStockItems(stockData || []);
 
-    } catch (error) {
-      console.error(error);
-      toast({ title: "Erro ao carregar dados", variant: "destructive" });
+    } catch (error: any) {
+      console.error("Erro no dashboard:", error);
+      toast({ 
+        title: "Erro ao carregar dados", 
+        description: error.message || "Verifique sua conexão e permissões.", 
+        variant: "destructive" 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -257,7 +275,7 @@ const SafetyDashboard = () => {
                         )}
                         {['concluido', 'rejeitado'].includes(req.status) && (
                           <div className={`text-center font-bold text-sm uppercase p-2 rounded ${req.status === 'concluido' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'}`}>
-                            {req.status}
+                            {req.status.replace('_', ' ')}
                           </div>
                         )}
                       </div>
