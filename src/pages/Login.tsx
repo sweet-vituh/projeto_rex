@@ -9,8 +9,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { loginSchema } from "@/lib/validations";
 import logo from "@/assets/logo.png";
+import { HardHat, Wrench, ArrowLeft } from "lucide-react";
+
+type ModuleType = "materials" | "epi" | null;
 
 const Login = () => {
+  const [selectedModule, setSelectedModule] = useState<ModuleType>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
@@ -19,8 +23,10 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if already logged in
+  // Check if already logged in - Only redirects if a module is selected
   useEffect(() => {
+    if (!selectedModule) return;
+
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
@@ -30,17 +36,29 @@ const Login = () => {
           .eq("user_id", session.user.id)
           .maybeSingle();
 
-        if (roleData?.role === "admin") {
-          navigate("/admin", { replace: true });
-        } else if (roleData?.role === "pcm") {
-          navigate("/inbox", { replace: true });
-        } else if (roleData?.role === "mechanic") {
-          navigate("/home", { replace: true });
-        }
+        handleRedirect(roleData?.role);
       }
     };
     checkSession();
-  }, [navigate]);
+  }, [navigate, selectedModule]);
+
+  const handleRedirect = (role?: string) => {
+    if (role === "admin") {
+      navigate("/admin", { replace: true });
+    } else if (role === "pcm") {
+      if (selectedModule === "epi") {
+        navigate("/epi/inbox", { replace: true });
+      } else {
+        navigate("/inbox", { replace: true });
+      }
+    } else if (role === "mechanic") {
+      if (selectedModule === "epi") {
+        navigate("/epi/home", { replace: true });
+      } else {
+        navigate("/home", { replace: true });
+      }
+    }
+  };
 
   const validateForm = (): boolean => {
     const result = loginSchema.safeParse({ username, password });
@@ -72,17 +90,13 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Convert username to email format using a valid dummy domain
-      const email = `${username.toLowerCase().trim()}@rexapp.com`; // Alterado para um domínio válido
+      const email = `${username.toLowerCase().trim()}@rexapp.com`;
 
       if (isSignUp) {
-        // Create account - ALWAYS as mechanic (security fix)
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            // emailRedirectTo: `${window.location.origin}/home` // Removido, pois domínios .local não são válidos para confirmação de e-mail
-          }
+          options: {}
         });
 
         if (signUpError) {
@@ -92,7 +106,6 @@ const Login = () => {
           throw signUpError;
         }
 
-        // Create role entry using secure RPC function - always creates as mechanic
         if (authData.user) {
           const { error: roleError } = await supabase.rpc('create_user_role', {
             _user_id: authData.user.id,
@@ -100,7 +113,6 @@ const Login = () => {
           });
 
           if (roleError) {
-            // If role creation fails, we should clean up the auth user
             await supabase.auth.signOut();
             throw new Error("Erro ao criar perfil de usuário");
           }
@@ -113,7 +125,6 @@ const Login = () => {
         setIsSignUp(false);
         setPassword("");
       } else {
-        // Login
         const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -126,7 +137,6 @@ const Login = () => {
           throw signInError;
         }
 
-        // Fetch user role from database (server-side source of truth)
         const { data: roleData, error: roleError } = await supabase
           .from("user_roles")
           .select("role, username")
@@ -135,7 +145,6 @@ const Login = () => {
 
         if (roleError) throw roleError;
 
-        // Verify user has a role
         if (!roleData) {
           await supabase.auth.signOut();
           throw new Error("Usuário não autorizado");
@@ -143,17 +152,10 @@ const Login = () => {
 
         toast({
           title: "Login realizado!",
-          description: "Bem-vindo ao Rex!",
+          description: `Bem-vindo ao Rex ${selectedModule === 'epi' ? 'EPI' : ''}!`,
         });
 
-        // Redirect based on role from database
-        if (roleData.role === "admin") {
-          navigate("/admin", { replace: true });
-        } else if (roleData.role === "pcm") {
-          navigate("/inbox", { replace: true });
-        } else {
-          navigate("/home", { replace: true });
-        }
+        handleRedirect(roleData.role);
       }
     } catch (error: any) {
       toast({
@@ -166,19 +168,96 @@ const Login = () => {
     }
   };
 
+  // Render Module Selection
+  if (!selectedModule) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-secondary p-4 animate-fade-in relative gap-8">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        
+        <div className="text-center space-y-4 mb-4">
+          <div className="flex justify-center">
+            <img src={logo} alt="Rex Logo" className="w-24 h-24 object-contain" />
+          </div>
+          <h1 className="text-4xl font-bold text-primary">Rex</h1>
+          <p className="text-muted-foreground text-lg">Selecione o módulo para acessar</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 w-full max-w-4xl">
+          <Card 
+            className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 hover:border-primary/50"
+            onClick={() => setSelectedModule("materials")}
+          >
+            <CardContent className="p-8 flex flex-col items-center text-center space-y-6">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <Wrench className="w-10 h-10 text-primary" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold">Requisições de Materiais</h2>
+                <p className="text-muted-foreground">
+                  Solicitação de peças e materiais para manutenção geral.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 border-2 hover:border-orange-500/50"
+            onClick={() => setSelectedModule("epi")}
+          >
+            <CardContent className="p-8 flex flex-col items-center text-center space-y-6">
+              <div className="w-20 h-20 rounded-full bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
+                <HardHat className="w-10 h-10 text-orange-500" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold">Requisições de EPI</h2>
+                <p className="text-muted-foreground">
+                  Solicitação de Equipamentos de Proteção Individual.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          Desenvolvido por João Vitor Duarte Antunes
+        </p>
+      </div>
+    );
+  }
+
+  // Render Login Form
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary p-4 animate-fade-in relative">
+      <div className="absolute top-4 left-4">
+        <Button 
+          variant="ghost" 
+          onClick={() => setSelectedModule(null)}
+          className="gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </Button>
+      </div>
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
       <Card className="w-full max-w-md shadow-lg animate-scale-in">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
-            <img src={logo} alt="Rex Logo" className="w-20 h-20 object-contain" />
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center ${selectedModule === 'epi' ? 'bg-orange-500/10' : 'bg-primary/10'}`}>
+              {selectedModule === 'epi' ? (
+                <HardHat className={`w-8 h-8 ${selectedModule === 'epi' ? 'text-orange-500' : 'text-primary'}`} />
+              ) : (
+                <img src={logo} alt="Rex Logo" className="w-10 h-10 object-contain" />
+              )}
+            </div>
           </div>
-          <CardTitle className="text-3xl font-bold">Rex</CardTitle>
+          <CardTitle className="text-3xl font-bold">
+            {selectedModule === 'epi' ? 'Rex EPI' : 'Rex Materiais'}
+          </CardTitle>
           <CardDescription>
-            {isSignUp ? "Criar nova conta de usuário" : "Sistema de Requisição de Materiais"}
+            {isSignUp ? "Criar nova conta de usuário" : `Acesso ao módulo de ${selectedModule === 'epi' ? 'EPIs' : 'Materiais'}`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -221,7 +300,11 @@ const Login = () => {
                 <p className="text-sm text-destructive">{validationErrors.password}</p>
               )}
             </div>
-            <Button type="submit" className="w-full transition-all duration-200 hover:scale-105" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className={`w-full transition-all duration-200 hover:scale-105 ${selectedModule === 'epi' ? 'bg-orange-500 hover:bg-orange-600' : ''}`} 
+              disabled={isLoading}
+            >
               {isLoading ? (isSignUp ? "Cadastrando..." : "Entrando...") : (isSignUp ? "Cadastrar" : "Entrar")}
             </Button>
             <Button
@@ -237,9 +320,6 @@ const Login = () => {
               {isSignUp ? "Já tenho conta" : "Criar nova conta"}
             </Button>
           </form>
-          <p className="mt-6 text-center text-xs text-muted-foreground">
-            Desenvolvido por João Vitor Duarte Antunes
-          </p>
         </CardContent>
       </Card>
     </div>
