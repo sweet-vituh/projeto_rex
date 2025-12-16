@@ -17,6 +17,12 @@ import History from "./pages/History";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
+// New EPI Pages
+import EpiHome from "./pages/epi/EpiHome";
+import NewEpiRequisition from "./pages/epi/NewEpiRequisition";
+import SafetyDashboard from "./pages/epi/SafetyDashboard";
+import WarehouseInventory from "./pages/epi/WarehouseInventory";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -29,6 +35,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Login />} />
+              
+              {/* Existing Maintenance Routes */}
               <Route
                 path="/home"
                 element={
@@ -93,7 +101,41 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+              {/* NEW EPI MODULE ROUTES */}
+              <Route
+                path="/epi/home"
+                element={
+                  <ProtectedRoute allowedRoles={["mechanic", "tecnico_seguranca", "almoxarifado", "admin"]}>
+                    <EpiHome />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/epi/nova-requisicao"
+                element={
+                  <ProtectedRoute allowedRoles={["mechanic", "tecnico_seguranca", "almoxarifado", "admin"]}>
+                    <NewEpiRequisition />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/epi/safety-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["tecnico_seguranca", "admin"]}>
+                    <SafetyDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/epi/warehouse"
+                element={
+                  <ProtectedRoute allowedRoles={["almoxarifado", "admin"]}>
+                    <WarehouseInventory />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

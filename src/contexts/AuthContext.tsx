@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-type AppRole = "pcm" | "mechanic" | "admin" | null;
+// Added new roles
+type AppRole = "pcm" | "mechanic" | "admin" | "tecnico_seguranca" | "almoxarifado" | null;
 
 interface AuthContextType {
   user: User | null;
@@ -68,13 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Defer Supabase calls with setTimeout to prevent deadlock
         if (session?.user) {
           setTimeout(async () => {
             const { role: newRole, username: newUsername } = await fetchUserRole(session.user.id);
@@ -90,7 +89,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
