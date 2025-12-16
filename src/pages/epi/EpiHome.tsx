@@ -2,12 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, History, LogOut, HardHat, Shirt, Footprints, Glasses, Ear } from "lucide-react";
+import { Plus, History, LogOut, HardHat, Shirt, Footprints, Glasses, Ear, LayoutGrid } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -99,6 +98,10 @@ const EpiHome = () => {
             <p className="text-sm text-muted-foreground">Olá, {username || "Colaborador"}</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/modules")} className="hidden md:flex">
+              <LayoutGrid className="w-4 h-4 mr-2" />
+              Módulos
+            </Button>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="w-5 h-5" />
@@ -108,6 +111,14 @@ const EpiHome = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Mobile Module Button */}
+        <div className="md:hidden">
+          <Button variant="outline" className="w-full" onClick={() => navigate("/modules")}>
+            <LayoutGrid className="w-4 h-4 mr-2" />
+            Trocar Módulo
+          </Button>
+        </div>
+
         {/* CTA Buttons */}
         <div className="space-y-3">
           <Button

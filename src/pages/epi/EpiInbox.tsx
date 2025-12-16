@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Search, Filter, LogOut, HardHat, RefreshCw } from "lucide-react";
+import { Search, Filter, LogOut, HardHat, RefreshCw, LayoutGrid } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -82,6 +82,15 @@ const EpiInbox = () => {
               <h1 className="text-2xl font-bold text-orange-500">Rex EPI <span className="text-sm text-muted-foreground font-normal">Gestão</span></h1>
             </div>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="hidden md:flex"
+                onClick={() => navigate("/modules")}
+              >
+                <LayoutGrid className="w-4 h-4 mr-2" />
+                Módulos
+              </Button>
               <Button variant="outline" size="icon" onClick={fetchRequisitions}>
                 <RefreshCw className="w-4 h-4" />
               </Button>
@@ -90,6 +99,18 @@ const EpiInbox = () => {
                 <LogOut className="w-5 h-5" />
               </Button>
             </div>
+          </div>
+
+          <div className="md:hidden mb-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="w-full"
+                onClick={() => navigate("/modules")}
+              >
+                <LayoutGrid className="w-4 h-4 mr-2" />
+                Trocar Módulo
+              </Button>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">

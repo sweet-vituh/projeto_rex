@@ -2,7 +2,7 @@ import { useCallback, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, History, LogOut, Clock, Pencil, Trash2 } from "lucide-react";
+import { Plus, History, LogOut, Clock, Pencil, Trash2, LayoutGrid } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RexLogo } from "@/components/RexLogo";
 import { BadgePriority } from "@/components/ui/badge-priority";
@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Requisition, Status } from "@/types/requisition";
+import { Requisition } from "@/types/requisition";
 import { toast as sonnerToast } from "sonner";
 
 const Home = () => {
@@ -158,6 +158,10 @@ const Home = () => {
             <p className="text-sm text-muted-foreground">Olá, {authUsername || "Usuário"}</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/modules")} className="hidden md:flex">
+              <LayoutGrid className="w-4 h-4 mr-2" />
+              Módulos
+            </Button>
             <RefreshButton onClick={handleRefresh} isRefreshing={isRefreshing} />
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={handleLogout}>
@@ -168,6 +172,14 @@ const Home = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Mobile Module Button */}
+        <div className="md:hidden mb-4">
+          <Button variant="outline" className="w-full" onClick={() => navigate("/modules")}>
+            <LayoutGrid className="w-4 h-4 mr-2" />
+            Trocar Módulo
+          </Button>
+        </div>
+
         {/* CTA Buttons */}
         <div className="space-y-3">
           <Button

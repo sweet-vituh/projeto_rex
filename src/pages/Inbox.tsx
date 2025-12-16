@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { BadgePriority } from "@/components/ui/badge-priority";
 import { BadgeStatus } from "@/components/ui/badge-status";
-import { LogOut, Search, Filter, Clock, Bell, HardHat, Plus } from "lucide-react";
+import { LogOut, Search, Filter, Clock, Bell, HardHat, Plus, LayoutGrid } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RexLogo } from "@/components/RexLogo";
 import { RefreshButton } from "@/components/RefreshButton";
@@ -96,7 +96,8 @@ const Inbox = () => {
                 className="hidden md:flex"
                 onClick={() => navigate("/modules")}
               >
-                <Plus className="w-4 h-4 mr-2" /> Nova Requisição
+                <LayoutGrid className="w-4 h-4 mr-2" />
+                Módulos
               </Button>
                <Button 
                 variant="outline"
@@ -123,12 +124,13 @@ const Inbox = () => {
 
            {/* Mobile Navigation Buttons */}
            <div className="flex gap-2 mb-4 md:hidden overflow-x-auto pb-2">
-              <Button 
+             <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => navigate("/modules")}
               >
-                <Plus className="w-4 h-4 mr-2" /> Nova
+                <LayoutGrid className="w-4 h-4 mr-2" />
+                Módulos
               </Button>
                <Button 
                 variant="outline"
