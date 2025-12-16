@@ -25,7 +25,8 @@ import {
   ArrowUpCircle, 
   ArrowDownCircle, 
   History,
-  Box
+  Box,
+  Plus
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -165,6 +166,9 @@ const StockDashboard = () => {
             <p className="text-sm text-muted-foreground">Gestão de Estoque - {username}</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/modules")} className="hidden md:flex">
+               <Plus className="w-4 h-4 mr-2" /> Fazer Requisição
+            </Button>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="w-5 h-5" />
@@ -174,7 +178,13 @@ const StockDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
-        
+        {/* Mobile Action Button */}
+        <div className="md:hidden">
+          <Button className="w-full" onClick={() => navigate("/modules")}>
+            <Plus className="w-4 h-4 mr-2" /> Fazer Requisição
+          </Button>
+        </div>
+
         {/* Alerts */}
         {lowStockItems.length > 0 && (
           <Card className="border-l-4 border-l-red-500 bg-red-50 dark:bg-red-900/10">

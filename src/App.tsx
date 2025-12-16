@@ -16,6 +16,7 @@ import RequisitionDetail from "./pages/RequisitionDetail";
 import History from "./pages/History";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import ModuleSelection from "./pages/ModuleSelection";
 
 // EPI Module
 import EpiHome from "./pages/epi/EpiHome";
@@ -40,11 +41,21 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Login />} />
               
-              {/* Módulo de Materiais (Padrão) */}
+              {/* Seleção de Módulos (Acessível para todos logados, exceto admin que tem dash próprio) */}
+              <Route
+                path="/modules"
+                element={
+                  <ProtectedRoute allowedRoles={["mechanic", "pcm", "safety_tech", "almoxarifado"]}>
+                    <ModuleSelection />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Módulo de Materiais */}
               <Route
                 path="/home"
                 element={
-                  <ProtectedRoute allowedRoles={["mechanic"]}>
+                  <ProtectedRoute allowedRoles={["mechanic", "pcm", "safety_tech", "almoxarifado"]}>
                     <Home />
                   </ProtectedRoute>
                 }
@@ -52,7 +63,7 @@ const App = () => (
               <Route
                 path="/nova-requisicao"
                 element={
-                  <ProtectedRoute allowedRoles={["mechanic"]}>
+                  <ProtectedRoute allowedRoles={["mechanic", "pcm", "safety_tech", "almoxarifado"]}>
                     <NewRequisition />
                   </ProtectedRoute>
                 }
@@ -60,7 +71,7 @@ const App = () => (
               <Route
                 path="/editar-requisicao/:id"
                 element={
-                  <ProtectedRoute allowedRoles={["mechanic"]}>
+                  <ProtectedRoute allowedRoles={["mechanic", "pcm", "safety_tech", "almoxarifado"]}>
                     <EditRequisition />
                   </ProtectedRoute>
                 }
@@ -84,7 +95,7 @@ const App = () => (
               <Route
                 path="/requisicao/:id"
                 element={
-                  <ProtectedRoute allowedRoles={["mechanic", "pcm"]}>
+                  <ProtectedRoute allowedRoles={["mechanic", "pcm", "safety_tech", "almoxarifado"]}>
                     <RequisitionDetail />
                   </ProtectedRoute>
                 }
@@ -92,7 +103,7 @@ const App = () => (
               <Route
                 path="/historico"
                 element={
-                  <ProtectedRoute allowedRoles={["mechanic"]}>
+                  <ProtectedRoute allowedRoles={["mechanic", "pcm", "safety_tech", "almoxarifado"]}>
                     <History />
                   </ProtectedRoute>
                 }
@@ -106,11 +117,11 @@ const App = () => (
                 }
               />
 
-              {/* Módulo de EPI (Novo) */}
+              {/* Módulo de EPI */}
               <Route
                 path="/epi/home"
                 element={
-                  <ProtectedRoute allowedRoles={["mechanic"]}>
+                  <ProtectedRoute allowedRoles={["mechanic", "pcm", "safety_tech", "almoxarifado"]}>
                     <EpiHome />
                   </ProtectedRoute>
                 }
@@ -118,7 +129,7 @@ const App = () => (
               <Route
                 path="/epi/new"
                 element={
-                  <ProtectedRoute allowedRoles={["mechanic"]}>
+                  <ProtectedRoute allowedRoles={["mechanic", "pcm", "safety_tech", "almoxarifado"]}>
                     <NewEpiRequisition />
                   </ProtectedRoute>
                 }
@@ -134,7 +145,7 @@ const App = () => (
               <Route
                 path="/epi/request/:id"
                 element={
-                  <ProtectedRoute allowedRoles={["mechanic", "pcm"]}>
+                  <ProtectedRoute allowedRoles={["mechanic", "pcm", "safety_tech", "almoxarifado"]}>
                     <EpiRequisitionDetail />
                   </ProtectedRoute>
                 }
