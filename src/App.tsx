@@ -22,6 +22,7 @@ import EpiHome from "./pages/epi/EpiHome";
 import NewEpiRequisition from "./pages/epi/NewEpiRequisition";
 import EpiInbox from "./pages/epi/EpiInbox";
 import EpiRequisitionDetail from "./pages/epi/EpiRequisitionDetail";
+import SafetyDashboard from "./pages/epi/SafetyDashboard";
 
 const queryClient = new QueryClient();
 
@@ -132,6 +133,16 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={["mechanic", "pcm"]}>
                     <EpiRequisitionDetail />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Painel do Técnico de Segurança */}
+              <Route
+                path="/epi/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["safety_tech"]}>
+                    <SafetyDashboard />
                   </ProtectedRoute>
                 }
               />

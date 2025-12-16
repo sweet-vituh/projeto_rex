@@ -45,6 +45,8 @@ const Login = () => {
   const handleRedirect = (role?: string) => {
     if (role === "admin") {
       navigate("/admin", { replace: true });
+    } else if (role === "safety_tech") {
+      navigate("/epi/dashboard", { replace: true });
     } else if (role === "pcm") {
       if (selectedModule === "epi") {
         navigate("/epi/inbox", { replace: true });
