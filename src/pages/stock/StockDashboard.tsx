@@ -32,6 +32,18 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+const EPI_TYPES = [
+  "Uniforme",
+  "Calçado",
+  "Luva",
+  "Óculos",
+  "Protetor Auricular",
+  "Capacete",
+  "Máscara",
+  "Cinto de Segurança",
+  "Outros"
+];
+
 const StockDashboard = () => {
   const navigate = useNavigate();
   const { user, username, signOut } = useAuth();
@@ -41,11 +53,23 @@ const StockDashboard = () => {
   const [movements, setMovements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  
+  // Movement Modal State
   const [movementModalOpen, setMovementModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [movementType, setMovementType] = useState<"ENTRY" | "EXIT">("ENTRY");
   const [movementQty, setMovementQty] = useState("");
   const [movementReason, setMovementReason] = useState("");
+
+  // New Item Modal State
+  const [newItemModalOpen, setNewItemModalOpen] = useState(false);
+  const [newItem, setNewItem] = useState({
+    item_type: "",
+    item_name: "",
+    size: "",
+    current_quantity: "",
+    min_quantity: "5"
+  });
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -96,6 +120,7 @@ const StockDashboard = () => {
     navigate("/");
   };
 
+  // ----- MOVEMENT LOGIC -----
   const openMovementModal = (item: any, type: "ENTRY" | "EXIT") => {
     setSelectedItem(item);
     setMovementType(type);
@@ -121,7 +146,6 @@ const StockDashboard = () => {
     }
 
     try {
-      // 1. Register movement
       const { error: moveError } = await supabase
         .from('epi_stock_movements')
         .insert({
@@ -134,7 +158,6 @@ const StockDashboard = () => {
 
       if (moveError) throw moveError;
 
-      // 2. Update stock quantity
       const { error: stockError } = await supabase
         .from('epi_stock')
         .update({ current_quantity: newQuantity, updated_at: new Date().toISOString() })
@@ -150,6 +173,46 @@ const StockDashboard = () => {
       toast({ title: "Erro ao registrar", description: error.message, variant: "destructive" });
     }
   };
+
+  // ----- NEW ITEM LOGIC -----
+  const openNewItemModal = () => {
+    setNewItem({
+      item_type: "",
+      item_name: "",
+      size: "",
+      current_quantity: "",
+      min_quantity: "5"
+    });
+    setNewItemModalOpen(true);
+  };
+
+  const handleNewItemSubmit = async () => {
+    if (!newItem.item_type || !newItem.item_name || !newItem.current_quantity || !newItem.min_quantity) {
+      toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('epi_stock')
+        .insert({
+          item_type: newItem.item_type,
+          item_name: newItem.item_name,
+          size: newItem.size || null,
+          current_quantity: parseInt(newItem.current_quantity),
+          min_quantity: parseInt(newItem.min_quantity)
+        });
+
+      if (error) throw error;
+
+      toast({ title: "Item cadastrado com sucesso!" });
+      setNewItemModalOpen(false);
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
+    }
+  };
+
 
   const filteredStock = stockItems.filter(item => 
     item.item_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -210,14 +273,19 @@ const StockDashboard = () => {
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <Package className="w-5 h-5" /> Inventário
               </h2>
-              <div className="relative w-full max-w-xs">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Buscar item..." 
-                  className="pl-10"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+              <div className="flex gap-2">
+                <div className="relative w-full max-w-xs">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Buscar item..." 
+                    className="pl-10 w-[180px] sm:w-[240px]"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+                <Button size="icon" onClick={openNewItemModal} title="Novo Item">
+                  <Plus className="w-5 h-5" />
+                </Button>
               </div>
             </div>
 
@@ -363,6 +431,79 @@ const StockDashboard = () => {
             >
               Confirmar {movementType === "ENTRY" ? "Entrada" : "Saída"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Item Modal */}
+      <Dialog open={newItemModalOpen} onOpenChange={setNewItemModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Item de Estoque</DialogTitle>
+            <DialogDescription>
+              Cadastre um novo EPI no sistema de estoque.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Tipo de EPI *</Label>
+              <Select 
+                value={newItem.item_type} 
+                onValueChange={(v) => setNewItem(p => ({ ...p, item_type: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {EPI_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Descrição / Nome *</Label>
+              <Input 
+                placeholder="Ex: Botina Bico PVC"
+                value={newItem.item_name}
+                onChange={(e) => setNewItem(p => ({ ...p, item_name: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tamanho / Numeração (Opcional)</Label>
+              <Input 
+                placeholder="Ex: 40, G, Único"
+                value={newItem.size}
+                onChange={(e) => setNewItem(p => ({ ...p, size: e.target.value }))}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Qtd. Inicial *</Label>
+                <Input 
+                  type="number"
+                  min="0"
+                  value={newItem.current_quantity}
+                  onChange={(e) => setNewItem(p => ({ ...p, current_quantity: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Estoque Mínimo *</Label>
+                <Input 
+                  type="number"
+                  min="0"
+                  value={newItem.min_quantity}
+                  onChange={(e) => setNewItem(p => ({ ...p, min_quantity: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewItemModalOpen(false)}>Cancelar</Button>
+            <Button onClick={handleNewItemSubmit}>Cadastrar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
