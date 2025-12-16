@@ -71,6 +71,142 @@ export type Database = {
         }
         Relationships: []
       }
+      epi_items: {
+        Row: {
+          id: string
+          name: string
+          category: string
+          size: string | null
+          stock_quantity: number
+          min_stock_quantity: number
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          category: string
+          size?: string | null
+          stock_quantity?: number
+          min_stock_quantity?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          category?: string
+          size?: string | null
+          stock_quantity?: number
+          min_stock_quantity?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      epi_requisitions: {
+        Row: {
+          id: string
+          user_id: string
+          epi_item_id: string
+          quantity: number
+          status: string
+          observation: string | null
+          created_at: string | null
+          updated_at: string | null
+          rejection_reason: string | null
+          assigned_to: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          epi_item_id: string
+          quantity: number
+          status?: string
+          observation?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          rejection_reason?: string | null
+          assigned_to?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          epi_item_id?: string
+          quantity?: number
+          status?: string
+          observation?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+          rejection_reason?: string | null
+          assigned_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_requisitions_epi_item_id_fkey"
+            columns: ["epi_item_id"]
+            isOneToOne: false
+            referencedRelation: "epi_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_requisitions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_requisitions_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      epi_movements: {
+        Row: {
+          id: string
+          epi_item_id: string
+          type: string
+          quantity: number
+          performed_by: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          epi_item_id: string
+          type: string
+          quantity: number
+          performed_by?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          epi_item_id?: string
+          type?: string
+          quantity?: number
+          performed_by?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_movements_epi_item_id_fkey"
+            columns: ["epi_item_id"]
+            isOneToOne: false
+            referencedRelation: "epi_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_movements_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       requisitions: {
         Row: {
           area: string
@@ -189,6 +325,8 @@ export type Database = {
         | "material_disponivel"
         | "encerrada_sem_liberacao"
         | "admin"
+        | "tecnico_seguranca"
+        | "almoxarifado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -324,7 +462,9 @@ export const Constants = {
         "material_disponivel",
         "encerrada_sem_liberacao",
         "admin",
+        "tecnico_seguranca",
+        "almoxarifado",
       ],
     },
   },
-} as const
+} as const;

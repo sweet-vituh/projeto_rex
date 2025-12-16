@@ -17,6 +17,14 @@ import History from "./pages/History";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
+// New EPI Module Imports
+import EpiHome from "./pages/EpiHome";
+import NewEpiRequisition from "./pages/NewEpiRequisition";
+import EpiRequisitionDetail from "./pages/EpiRequisitionDetail";
+import EpiHistory from "./pages/EpiHistory";
+import SecurityTechnicianDashboard from "./pages/SecurityTechnicianDashboard";
+import WarehouseDashboard from "./pages/WarehouseDashboard";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -29,6 +37,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Login />} />
+              {/* Material Requisitions Module */}
               <Route
                 path="/home"
                 element={
@@ -85,6 +94,58 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              {/* EPI Requisitions Module */}
+              <Route
+                path="/epi-home"
+                element={
+                  <ProtectedRoute allowedRoles={["mechanic", "tecnico_seguranca"]}>
+                    <EpiHome />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/new-epi-requisition"
+                element={
+                  <ProtectedRoute allowedRoles={["mechanic"]}>
+                    <NewEpiRequisition />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/epi-requisition/:id"
+                element={
+                  <ProtectedRoute allowedRoles={["mechanic", "tecnico_seguranca"]}>
+                    <EpiRequisitionDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/epi-history"
+                element={
+                  <ProtectedRoute allowedRoles={["mechanic"]}>
+                    <EpiHistory />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Security Technician Dashboard */}
+              <Route
+                path="/security-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["tecnico_seguranca"]}>
+                    <SecurityTechnicianDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Warehouse Dashboard */}
+              <Route
+                path="/warehouse-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["almoxarifado"]}>
+                    <WarehouseDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Admin Panel */}
               <Route
                 path="/admin"
                 element={
@@ -93,7 +154,7 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

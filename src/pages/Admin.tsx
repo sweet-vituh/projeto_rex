@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Search, Shield, Users, RefreshCw, UserCheck, UserX, Package } from "lucide-react";
+import { LogOut, Search, Shield, Users, RefreshCw, UserCheck, UserX, Package, HardHat, Warehouse } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RexLogo } from "@/components/RexLogo";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +29,7 @@ interface UserRole {
   id: string;
   user_id: string;
   username: string;
-  role: "mechanic" | "pcm" | "admin";
+  role: "mechanic" | "pcm" | "admin" | "tecnico_seguranca" | "almoxarifado";
   created_at: string;
 }
 
@@ -47,7 +47,7 @@ const Admin = () => {
     open: boolean;
     userId: string;
     username: string;
-    newRole: "mechanic" | "pcm";
+    newRole: "mechanic" | "pcm" | "tecnico_seguranca" | "almoxarifado";
     action: "promote" | "demote";
   } | null>(null);
 
@@ -120,7 +120,7 @@ const Admin = () => {
 
       toast({
         title: confirmDialog.action === "promote" ? "Usuário promovido!" : "Usuário rebaixado!",
-        description: `${confirmDialog.username} agora é ${confirmDialog.newRole === 'pcm' ? 'PCM' : 'Mecânico'}`,
+        description: `${confirmDialog.username} agora é ${getRoleLabel(confirmDialog.newRole)}`,
       });
 
       fetchUsers();
@@ -141,6 +141,10 @@ const Admin = () => {
         return 'default';
       case 'pcm':
         return 'secondary';
+      case 'tecnico_seguranca':
+        return 'outline';
+      case 'almoxarifado':
+        return 'outline';
       default:
         return 'outline';
     }
@@ -152,6 +156,10 @@ const Admin = () => {
         return 'Admin';
       case 'pcm':
         return 'PCM';
+      case 'tecnico_seguranca':
+        return 'Téc. Segurança';
+      case 'almoxarifado':
+        return 'Almoxarifado';
       default:
         return 'Mecânico';
     }
@@ -160,6 +168,8 @@ const Admin = () => {
   const mechanicCount = users.filter(u => u.role === 'mechanic').length;
   const pcmCount = users.filter(u => u.role === 'pcm').length;
   const adminCount = users.filter(u => u.role === 'admin').length;
+  const securityCount = users.filter(u => u.role === 'tecnico_seguranca').length;
+  const warehouseCount = users.filter(u => u.role === 'almoxarifado').length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -195,7 +205,7 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-lg grid-cols-2 sm:grid-cols-3">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Usuários
@@ -204,6 +214,7 @@ const Admin = () => {
               <Package className="w-4 h-4" />
               Catálogo de Itens
             </TabsTrigger>
+            {/* Add EPI Catalog tab here later */}
           </TabsList>
 
           {/* Users Tab */}
@@ -229,6 +240,8 @@ const Admin = () => {
                     <SelectItem value="all">Todas Funções</SelectItem>
                     <SelectItem value="mechanic">Mecânico</SelectItem>
                     <SelectItem value="pcm">PCM</SelectItem>
+                    <SelectItem value="tecnico_seguranca">Téc. Segurança</SelectItem>
+                    <SelectItem value="almoxarifado">Almoxarifado</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
@@ -236,7 +249,7 @@ const Admin = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               <Card>
                 <CardContent className="p-4 text-center">
                   <Users className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
@@ -249,6 +262,20 @@ const Admin = () => {
                   <UserCheck className="w-6 h-6 mx-auto mb-2 text-primary" />
                   <p className="text-2xl font-bold">{pcmCount}</p>
                   <p className="text-sm text-muted-foreground">PCM</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <HardHat className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                  <p className="text-2xl font-bold">{securityCount}</p>
+                  <p className="text-sm text-muted-foreground">Téc. Segurança</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Warehouse className="w-6 h-6 mx-auto mb-2 text-orange-600" />
+                  <p className="text-2xl font-bold">{warehouseCount}</p>
+                  <p className="text-sm text-muted-foreground">Almoxarifado</p>
                 </CardContent>
               </Card>
               <Card>
@@ -302,23 +329,55 @@ const Admin = () => {
                         </div>
                         <div className="flex gap-2">
                           {user.role === 'mechanic' && (
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => setConfirmDialog({
-                                open: true,
-                                userId: user.user_id,
-                                username: user.username,
-                                newRole: 'pcm',
-                                action: 'promote'
-                              })}
-                              className="transition-all duration-200"
-                            >
-                              <UserCheck className="w-4 h-4 mr-1" />
-                              Promover a PCM
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => setConfirmDialog({
+                                  open: true,
+                                  userId: user.user_id,
+                                  username: user.username,
+                                  newRole: 'pcm',
+                                  action: 'promote'
+                                })}
+                                className="transition-all duration-200"
+                              >
+                                <UserCheck className="w-4 h-4 mr-1" />
+                                Promover a PCM
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setConfirmDialog({
+                                  open: true,
+                                  userId: user.user_id,
+                                  username: user.username,
+                                  newRole: 'tecnico_seguranca',
+                                  action: 'promote'
+                                })}
+                                className="transition-all duration-200"
+                              >
+                                <HardHat className="w-4 h-4 mr-1" />
+                                Promover a Téc. Segurança
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setConfirmDialog({
+                                  open: true,
+                                  userId: user.user_id,
+                                  username: user.username,
+                                  newRole: 'almoxarifado',
+                                  action: 'promote'
+                                })}
+                                className="transition-all duration-200"
+                              >
+                                <Warehouse className="w-4 h-4 mr-1" />
+                                Promover a Almoxarifado
+                              </Button>
+                            </>
                           )}
-                          {user.role === 'pcm' && (
+                          {(user.role === 'pcm' || user.role === 'tecnico_seguranca' || user.role === 'almoxarifado') && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -366,8 +425,8 @@ const Admin = () => {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDialog?.action === 'promote' 
-                ? `Tem certeza que deseja promover ${confirmDialog?.username} para PCM? Ele terá acesso a todas as requisições.`
-                : `Tem certeza que deseja rebaixar ${confirmDialog?.username} para Mecânico? Ele perderá acesso às funcionalidades de PCM.`
+                ? `Tem certeza que deseja promover ${confirmDialog?.username} para ${getRoleLabel(confirmDialog?.newRole || 'mechanic')}? Ele terá acesso às funcionalidades correspondentes.`
+                : `Tem certeza que deseja rebaixar ${confirmDialog?.username} para Mecânico? Ele perderá acesso às funcionalidades de ${getRoleLabel(confirmDialog?.newRole || 'mechanic')}.`
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
