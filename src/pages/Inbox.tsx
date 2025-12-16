@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { BadgePriority } from "@/components/ui/badge-priority";
 import { BadgeStatus } from "@/components/ui/badge-status";
-import { LogOut, Search, Filter, Clock, Bell } from "lucide-react";
+import { LogOut, Search, Filter, Clock, Bell, HardHat, Plus } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RexLogo } from "@/components/RexLogo";
 import { RefreshButton } from "@/components/RefreshButton";
@@ -91,9 +91,25 @@ const Inbox = () => {
             </div>
             <div className="flex items-center gap-2">
               <Button 
+                variant="ghost" 
+                size="sm"
+                className="hidden md:flex"
+                onClick={() => navigate("/modules")}
+              >
+                <Plus className="w-4 h-4 mr-2" /> Nova Requisição
+              </Button>
+               <Button 
+                variant="outline"
+                size="sm"
+                className="hidden md:flex text-orange-600 border-orange-200 hover:bg-orange-50 dark:hover:bg-orange-950"
+                onClick={() => navigate("/epi/inbox")}
+              >
+                <HardHat className="w-4 h-4 mr-2" /> Gestão de EPIs
+              </Button>
+              <Button 
                 variant="outline" 
                 onClick={() => navigate("/minhas-requisicoes")}
-                className="transition-all duration-200 hover:scale-105"
+                className="transition-all duration-200 hover:scale-105 hidden sm:flex"
               >
                 Minhas Requisições
               </Button>
@@ -104,6 +120,32 @@ const Inbox = () => {
               </Button>
             </div>
           </div>
+
+           {/* Mobile Navigation Buttons */}
+           <div className="flex gap-2 mb-4 md:hidden overflow-x-auto pb-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate("/modules")}
+              >
+                <Plus className="w-4 h-4 mr-2" /> Nova
+              </Button>
+               <Button 
+                variant="outline"
+                size="sm"
+                className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                onClick={() => navigate("/epi/inbox")}
+              >
+                <HardHat className="w-4 h-4 mr-2" /> EPIs
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate("/minhas-requisicoes")}
+              >
+                Minhas
+              </Button>
+           </div>
 
           {/* Search & Filters */}
           <div className="space-y-3">
