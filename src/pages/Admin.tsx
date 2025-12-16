@@ -6,30 +6,41 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Search, Shield, Users, RefreshCw, UserCheck, UserX, Package } from "lucide-react";
+import { 
+  LogOut, 
+  Search, 
+  Shield, 
+  Users, 
+  RefreshCw, 
+  UserCog, 
+  Package, 
+  HardHat, 
+  Warehouse
+} from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RexLogo } from "@/components/RexLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CatalogManager } from "@/components/admin/CatalogManager";
+
+type RoleType = "mechanic" | "pcm" | "admin" | "safety_tech" | "almoxarifado";
 
 interface UserRole {
   id: string;
   user_id: string;
   username: string;
-  role: "mechanic" | "pcm" | "admin";
+  role: RoleType;
   created_at: string;
 }
 
@@ -43,13 +54,15 @@ const Admin = () => {
   const [filterRole, setFilterRole] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState<{
+  
+  // State for Role Edit Dialog
+  const [editRoleDialog, setEditRoleDialog] = useState<{
     open: boolean;
     userId: string;
     username: string;
-    newRole: "mechanic" | "pcm";
-    action: "promote" | "demote";
+    currentRole: RoleType;
   } | null>(null);
+  const [selectedNewRole, setSelectedNewRole] = useState<RoleType | "">("");
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -107,20 +120,35 @@ const Admin = () => {
     navigate("/");
   };
 
-  const handleRoleChange = async () => {
-    if (!confirmDialog) return;
+  const openEditDialog = (user: UserRole) => {
+    setEditRoleDialog({
+      open: true,
+      userId: user.user_id,
+      username: user.username,
+      currentRole: user.role
+    });
+    setSelectedNewRole(user.role);
+  };
+
+  const handleRoleUpdate = async () => {
+    if (!editRoleDialog || !selectedNewRole) return;
+
+    if (editRoleDialog.currentRole === selectedNewRole) {
+      setEditRoleDialog(null);
+      return;
+    }
 
     try {
       const { error } = await supabase
         .from('user_roles')
-        .update({ role: confirmDialog.newRole })
-        .eq('user_id', confirmDialog.userId);
+        .update({ role: selectedNewRole })
+        .eq('user_id', editRoleDialog.userId);
 
       if (error) throw error;
 
       toast({
-        title: confirmDialog.action === "promote" ? "Usuário promovido!" : "Usuário rebaixado!",
-        description: `${confirmDialog.username} agora é ${confirmDialog.newRole === 'pcm' ? 'PCM' : 'Mecânico'}`,
+        title: "Função atualizada!",
+        description: `O usuário ${editRoleDialog.username} agora é ${getRoleLabel(selectedNewRole)}.`,
       });
 
       fetchUsers();
@@ -131,35 +159,38 @@ const Admin = () => {
         variant: "destructive",
       });
     } finally {
-      setConfirmDialog(null);
+      setEditRoleDialog(null);
+      setSelectedNewRole("");
     }
   };
 
   const getRoleBadgeVariant = (userRole: string) => {
     switch (userRole) {
-      case 'admin':
-        return 'default';
-      case 'pcm':
-        return 'secondary';
-      default:
-        return 'outline';
+      case 'admin': return 'default';
+      case 'pcm': return 'secondary';
+      case 'safety_tech': return 'secondary'; // Using secondary for specialized roles
+      case 'almoxarifado': return 'secondary';
+      default: return 'outline';
     }
   };
 
   const getRoleLabel = (userRole: string) => {
     switch (userRole) {
-      case 'admin':
-        return 'Admin';
-      case 'pcm':
-        return 'PCM';
-      default:
-        return 'Mecânico';
+      case 'admin': return 'Admin';
+      case 'pcm': return 'PCM';
+      case 'safety_tech': return 'Téc. Segurança';
+      case 'almoxarifado': return 'Almoxarifado';
+      default: return 'Mecânico';
     }
   };
 
-  const mechanicCount = users.filter(u => u.role === 'mechanic').length;
-  const pcmCount = users.filter(u => u.role === 'pcm').length;
-  const adminCount = users.filter(u => u.role === 'admin').length;
+  const stats = {
+    mechanic: users.filter(u => u.role === 'mechanic').length,
+    pcm: users.filter(u => u.role === 'pcm').length,
+    safety_tech: users.filter(u => u.role === 'safety_tech').length,
+    almoxarifado: users.filter(u => u.role === 'almoxarifado').length,
+    admin: users.filter(u => u.role === 'admin').length,
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -222,13 +253,15 @@ const Admin = () => {
 
               <div className="flex items-center gap-2">
                 <Select value={filterRole} onValueChange={setFilterRole}>
-                  <SelectTrigger className="w-[160px] h-9">
+                  <SelectTrigger className="w-[180px] h-9">
                     <SelectValue placeholder="Filtrar por função" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas Funções</SelectItem>
                     <SelectItem value="mechanic">Mecânico</SelectItem>
                     <SelectItem value="pcm">PCM</SelectItem>
+                    <SelectItem value="safety_tech">Téc. Segurança</SelectItem>
+                    <SelectItem value="almoxarifado">Almoxarifado</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
@@ -236,26 +269,40 @@ const Admin = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <Card>
                 <CardContent className="p-4 text-center">
-                  <Users className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-2xl font-bold">{mechanicCount}</p>
-                  <p className="text-sm text-muted-foreground">Mecânicos</p>
+                  <Users className="w-5 h-5 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-xl font-bold">{stats.mechanic}</p>
+                  <p className="text-xs text-muted-foreground">Mecânicos</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
-                  <UserCheck className="w-6 h-6 mx-auto mb-2 text-primary" />
-                  <p className="text-2xl font-bold">{pcmCount}</p>
-                  <p className="text-sm text-muted-foreground">PCM</p>
+                  <UserCog className="w-5 h-5 mx-auto mb-2 text-blue-500" />
+                  <p className="text-xl font-bold">{stats.pcm}</p>
+                  <p className="text-xs text-muted-foreground">PCM</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
-                  <Shield className="w-6 h-6 mx-auto mb-2 text-primary" />
-                  <p className="text-2xl font-bold">{adminCount}</p>
-                  <p className="text-sm text-muted-foreground">Admins</p>
+                  <HardHat className="w-5 h-5 mx-auto mb-2 text-orange-500" />
+                  <p className="text-xl font-bold">{stats.safety_tech}</p>
+                  <p className="text-xs text-muted-foreground">Téc. Seg.</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Warehouse className="w-5 h-5 mx-auto mb-2 text-purple-500" />
+                  <p className="text-xl font-bold">{stats.almoxarifado}</p>
+                  <p className="text-xs text-muted-foreground">Almox.</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Shield className="w-5 h-5 mx-auto mb-2 text-primary" />
+                  <p className="text-xl font-bold">{stats.admin}</p>
+                  <p className="text-xs text-muted-foreground">Admins</p>
                 </CardContent>
               </Card>
             </div>
@@ -263,7 +310,7 @@ const Admin = () => {
             {/* Users List */}
             {isLoading ? (
               <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
+                {[1, 2, 3].map((i) => (
                   <Card key={i}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -297,49 +344,25 @@ const Admin = () => {
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            Desde {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                            ID: {user.username}
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          {user.role === 'mechanic' && (
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => setConfirmDialog({
-                                open: true,
-                                userId: user.user_id,
-                                username: user.username,
-                                newRole: 'pcm',
-                                action: 'promote'
-                              })}
-                              className="transition-all duration-200"
-                            >
-                              <UserCheck className="w-4 h-4 mr-1" />
-                              Promover a PCM
-                            </Button>
-                          )}
-                          {user.role === 'pcm' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setConfirmDialog({
-                                open: true,
-                                userId: user.user_id,
-                                username: user.username,
-                                newRole: 'mechanic',
-                                action: 'demote'
-                              })}
-                              className="transition-all duration-200"
-                            >
-                              <UserX className="w-4 h-4 mr-1" />
-                              Rebaixar
-                            </Button>
-                          )}
-                          {user.role === 'admin' && (
-                            <Badge variant="secondary" className="h-9 px-3 flex items-center">
+                          {user.role === 'admin' ? (
+                             <Badge variant="secondary" className="h-9 px-3 flex items-center">
                               <Shield className="w-4 h-4 mr-1" />
                               Protegido
                             </Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEditDialog(user)}
+                              className="transition-all duration-200"
+                            >
+                              <UserCog className="w-4 h-4 mr-1" />
+                              Alterar Função
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -357,28 +380,54 @@ const Admin = () => {
         </Tabs>
       </main>
 
-      {/* Confirmation Dialog */}
-      <AlertDialog open={!!confirmDialog} onOpenChange={() => setConfirmDialog(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmDialog?.action === 'promote' ? 'Promover Usuário' : 'Rebaixar Usuário'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmDialog?.action === 'promote' 
-                ? `Tem certeza que deseja promover ${confirmDialog?.username} para PCM? Ele terá acesso a todas as requisições.`
-                : `Tem certeza que deseja rebaixar ${confirmDialog?.username} para Mecânico? Ele perderá acesso às funcionalidades de PCM.`
-              }
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRoleChange}>
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Edit Role Dialog */}
+      <Dialog open={!!editRoleDialog} onOpenChange={(open) => !open && setEditRoleDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterar Função do Usuário</DialogTitle>
+            <DialogDescription>
+              Defina o nível de acesso para <strong>{editRoleDialog?.username}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label>Função</Label>
+              <Select 
+                value={selectedNewRole} 
+                onValueChange={(value) => setSelectedNewRole(value as RoleType)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a função" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mechanic">Mecânico (Padrão)</SelectItem>
+                  <SelectItem value="pcm">PCM (Gestão de Manutenção)</SelectItem>
+                  <SelectItem value="safety_tech">Técnico de Segurança (EPI)</SelectItem>
+                  <SelectItem value="almoxarifado">Almoxarifado (Estoque)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="bg-muted p-3 rounded-md text-sm text-muted-foreground">
+              <p className="font-semibold mb-1">Permissões:</p>
+              <ul className="list-disc pl-4 space-y-1">
+                {selectedNewRole === 'mechanic' && <li>Pode criar requisições de materiais e EPIs.</li>}
+                {selectedNewRole === 'pcm' && <li>Gerencia requisições de manutenção e aprova pedidos.</li>}
+                {selectedNewRole === 'safety_tech' && <li>Gerencia aprovações de EPIs e visualiza dashboard de segurança.</li>}
+                {selectedNewRole === 'almoxarifado' && <li>Gerencia estoque físico e registra movimentações.</li>}
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRoleDialog(null)}>Cancelar</Button>
+            <Button onClick={handleRoleUpdate} disabled={!selectedNewRole || selectedNewRole === editRoleDialog?.currentRole}>
+              Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
