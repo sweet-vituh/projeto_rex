@@ -17,6 +17,12 @@ import History from "./pages/History";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
+// EPI Module
+import EpiHome from "./pages/epi/EpiHome";
+import NewEpiRequisition from "./pages/epi/NewEpiRequisition";
+import EpiInbox from "./pages/epi/EpiInbox";
+import EpiRequisitionDetail from "./pages/epi/EpiRequisitionDetail";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -29,6 +35,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Login />} />
+              
+              {/* Módulo de Materiais (Padrão) */}
               <Route
                 path="/home"
                 element={
@@ -93,7 +101,42 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+              {/* Módulo de EPI (Novo) */}
+              <Route
+                path="/epi/home"
+                element={
+                  <ProtectedRoute allowedRoles={["mechanic"]}>
+                    <EpiHome />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/epi/new"
+                element={
+                  <ProtectedRoute allowedRoles={["mechanic"]}>
+                    <NewEpiRequisition />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/epi/inbox"
+                element={
+                  <ProtectedRoute allowedRoles={["pcm"]}>
+                    <EpiInbox />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/epi/request/:id"
+                element={
+                  <ProtectedRoute allowedRoles={["mechanic", "pcm"]}>
+                    <EpiRequisitionDetail />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
